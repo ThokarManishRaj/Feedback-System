@@ -1,1 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Register — KDU Facility Management</title>
+  <link rel="stylesheet" href="../css/style.css"/>
+  <style>
+    body { background: var(--off-white); }
+    .auth-layout {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+    }
+    .auth-panel {
+      background: linear-gradient(160deg, var(--navy-dark) 0%, var(--navy-mid) 60%, var(--navy-light) 100%);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 40px;
+      position: relative;
+      overflow: hidden;
+    }
+    .auth-panel::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 30% 70%, rgba(201,168,76,0.12) 0%, transparent 60%),
+        url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23c9a84c' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    }
+    .auth-panel-content { position: relative; z-index: 1; }
+    .auth-panel h2 {
+      font-family: var(--font-display);
+      font-size: 2rem;
+      color: white;
+      margin-top: 40px;
+      line-height: 1.2;
+    }
+    .auth-panel h2 span { color: var(--gold); }
+    .auth-panel p { color: rgba(255,255,255,0.6); margin-top: 14px; font-size: 0.95rem; line-height: 1.7; }
+    .auth-panel-features { margin-top: 40px; display: flex; flex-direction: column; gap: 16px; }
+    .panel-feature { display: flex; align-items: flex-start; gap: 14px; }
+    .panel-feature .pf-icon { font-size: 1.3rem; margin-top: 2px; flex-shrink: 0; }
+    .panel-feature .pf-title { font-size: 0.875rem; font-weight: 600; color: white; }
+    .panel-feature .pf-desc { font-size: 0.8rem; color: rgba(255,255,255,0.5); margin-top: 2px; }
+    .auth-panel-footer { position: relative; z-index: 1; }
+    .auth-panel-footer p { font-size: 0.75rem; color: rgba(255,255,255,0.3); }
 
+    .auth-form-side {
+      background: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+      overflow-y: auto;
+    }
+    .auth-form-wrap { width: 100%; max-width: 460px; }
+    .auth-form-header { margin-bottom: 28px; }
+    .auth-form-header h1 { font-size: 1.6rem; color: var(--gray-800); }
+    .auth-form-header p { font-size: 0.875rem; color: var(--gray-500); margin-top: 6px; }
+    .auth-form-footer { margin-top: 20px; text-align: center; font-size: 0.85rem; color: var(--gray-500); }
+    .auth-form-footer a { color: var(--navy); font-weight: 600; }
+    .section-divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 20px 0;
+      color: var(--gray-300);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .section-divider::before, .section-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--gray-200);
+    }
+    .terms-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .terms-row input[type="checkbox"] { margin-top: 3px; flex-shrink: 0; }
+    .terms-row label { font-size: 0.82rem; color: var(--gray-500); line-height: 1.5; }
+    .terms-row label a { color: var(--navy); font-weight: 500; }
+
+    @media(max-width:900px) {
+      .auth-layout { grid-template-columns: 1fr; }
+      .auth-panel { display: none; }
+      .auth-form-side { padding: 32px 20px; }
+    }
+    @keyframes shake { 0%,100%{transform:translateX(0)} 20%,60%{transform:translateX(-6px)} 40%,80%{transform:translateX(6px)} }
+    .shake { animation: shake 0.4s ease; }
+  </style>
+</head>
+<body data-page="register">
+
+<div class="auth-layout">
+  <!-- LEFT PANEL -->
+  <div class="auth-panel">
+    <div class="auth-panel-content">
+      <a href="index.html" class="kdu-logo-wrap inverted">
+        <span class="kdu-logo-placeholder"></span>
+        <div class="kdu-logo-text">
+          <span class="uni-name">Kyungdong University</span>
+          <span class="sys-name">Facility Management</span>
+        </div>
+      </a>
+      <h2>Make Your<br/><span>Campus Better</span>.</h2>
+      <p>Join thousands of KDU students who use this portal to improve campus life and get facility issues resolved faster.</p>
+      <div class="auth-panel-features">
+        <div class="panel-feature">
+          <div class="pf-icon">📝</div>
+          <div><div class="pf-title">Submit Complaints Easily</div><div class="pf-desc">Report any facility issue in under 2 minutes</div></div>
+        </div>
+        <div class="panel-feature">
+          <div class="pf-icon">📊</div>
+          <div><div class="pf-title">Track in Real Time</div><div class="pf-desc">Follow every stage of your complaint resolution</div></div>
+        </div>
+        <div class="panel-feature">
+          <div class="pf-icon">🔒</div>
+          <div><div class="pf-title">Anonymous Option</div><div class="pf-desc">Report sensitive issues without revealing identity</div></div>
+        </div>
+        <div class="panel-feature">
+          <div class="pf-icon">💬</div>
+          <div><div class="pf-title">Direct Admin Response</div><div class="pf-desc">Receive personal replies from the facilities team</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="auth-panel-footer">
+      <p>© 2025 Kyungdong University · Goseong, Gangwon Province, Korea</p>
+    </div>
+  </div>
+
+  <!-- RIGHT FORM -->
+  <div class="auth-form-side">
+    <div class="auth-form-wrap">
+      <div class="auth-form-header">
+        <h1>Create Account</h1>
+        <p>Register as a KDU student to access the complaint portal</p>
+      </div>
+
+      <form id="register-form" novalidate>
+        <div class="form-group">
+          <label class="form-label" for="fullname">Full Name <span class="req">*</span></label>
+          <input class="form-input" type="text" id="fullname" name="fullname" placeholder="e.g. Kim Min-jun" autocomplete="name"/>
+          <div class="form-error" id="err-name"></div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="student_id">Student ID <span class="req">*</span></label>
+            <input class="form-input" type="text" id="student_id" name="student_id" placeholder="e.g. KDU2024001"/>
+            <div class="form-error" id="err-student-id"></div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="year">Year of Study <span class="req">*</span></label>
+            <select class="form-select" id="year" name="year">
+              <option value="">Select year</option>
+              <option value="1">1st Year</option>
+              <option value="2">2nd Year</option>
+              <option value="3">3rd Year</option>
+              <option value="4">4th Year</option>
+              <option value="graduate">Graduate</option>
+            </select>
+            <div class="form-error" id="err-year"></div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="faculty">Faculty / Department <span class="req">*</span></label>
+          <select class="form-select" id="faculty" name="faculty">
+            <option value="">Select your faculty</option>
+            <option>College of Health Sciences</option>
+            <option>College of Social Welfare</option>
+            <option>College of Arts & Design</option>
+            <option>College of Humanities & Social Sciences</option>
+            <option>College of Engineering</option>
+            <option>College of Natural Sciences</option>
+            <option>School of Business Administration</option>
+            <option>School of International Studies</option>
+            <option>Graduate School</option>
+          </select>
+          <div class="form-error" id="err-faculty"></div>
+        </div>
+
+        <div class="section-divider">Account Credentials</div>
+
+        <div class="form-group">
+          <label class="form-label" for="email">University Email <span class="req">*</span></label>
+          <input class="form-input" type="email" id="email" name="email" placeholder="e.g. yourname@kdu.edu" autocomplete="email"/>
+          <div class="form-hint">Use your KDU student email address</div>
+          <div class="form-error" id="err-email"></div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="password">Password <span class="req">*</span></label>
+            <input class="form-input" type="password" id="password" name="password" placeholder="Min. 6 characters" autocomplete="new-password"/>
+            <div class="form-error" id="err-password"></div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="confirm_password">Confirm Password <span class="req">*</span></label>
+            <input class="form-input" type="password" id="confirm_password" name="confirm_password" placeholder="Re-enter password" autocomplete="new-password"/>
+            <div class="form-error" id="err-confirm"></div>
+          </div>
+        </div>
+
+        <div class="terms-row">
+          <input type="checkbox" id="terms" required/>
+          <label for="terms">I agree to the <a href="#">Terms of Use</a> and <a href="#">Privacy Policy</a> of the KDU Facility Management System.</label>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block btn-lg">Create My Account</button>
+      </form>
+
+      <div class="auth-form-footer">
+        Already have an account? <a href="login.html">Sign in here</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+<script src="../js/utils.js"></script>
+<script src="../js/auth.js"></script>
+</body>
+</html>
