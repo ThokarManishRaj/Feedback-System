@@ -1,1 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>KDU Facility Management System — Kyungdong University</title>
+  <link rel="stylesheet" href="../css/style.css"/>
+  <style>
+    /* HERO SECTION */
+    .hero {
+      background: linear-gradient(135deg, var(--navy-dark) 0%, var(--navy-mid) 55%, #1a3f7a 100%);
+      min-height: 92vh;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 70% 50%, rgba(201,168,76,0.08) 0%, transparent 60%),
+                  url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23c9a84c' fill-opacity='0.03'%3E%3Cpath d='M0 0h40v40H0V0zm40 40h40v40H40V40zm0-40h2l-2 2V0zm0 4l4-4h2l-6 6V4zm0 4l8-8h2L40 10V8zm0 4L52 0h2L40 14v-2zm0 4L56 0h2L40 18v-2zm0 4L60 0h2L40 22v-2zm0 4L64 0h2L40 26v-2zm0 4L68 0h2L40 30v-2zm0 4L72 0h2L40 34v-2zm0 4L76 0h2L40 38v-2zm0 4L80 0v2L42 40h-2zm4 0L80 4v2L46 40h-2zm4 0L80 8v2L50 40h-2zm4 0L80 12v2L54 40h-2zm4 0L80 16v2L58 40h-2zm4 0L80 20v2L62 40h-2zm4 0L80 24v2L66 40h-2zm4 0L80 28v2L70 40h-2zm4 0L80 32v2L74 40h-2zm4 0L80 36v2L78 40h-2zm4 0L80 40 80 40h-2z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    }
+    .hero-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 40px;
+      position: relative;
+      z-index: 10;
+    }
+    .hero-nav-links { display: flex; align-items: center; gap: 8px; }
+    .hero-nav-links a {
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: rgba(255,255,255,0.7);
+      padding: 8px 14px;
+      border-radius: 6px;
+      transition: all 0.2s;
+    }
+    .hero-nav-links a:hover { color: white; background: rgba(255,255,255,0.08); }
+    .hero-body {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      padding: 40px;
+      text-align: center;
+      position: relative;
+      z-index: 10;
+    }
+    .hero-shield {
+      width: 90px;
+      height: 90px;
+      margin-bottom: 24px;
+    }
+    .hero-pretitle {
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 12px;
+    }
+    .hero h1 {
+      font-size: clamp(2rem, 5vw, 3.2rem);
+      color: white;
+      line-height: 1.15;
+      margin-bottom: 16px;
+    }
+    .hero h1 span { color: var(--gold-light); }
+    .hero-sub {
+      font-size: 1.05rem;
+      color: rgba(255,255,255,0.7);
+      max-width: 520px;
+      line-height: 1.7;
+      margin-bottom: 36px;
+    }
+    .hero-actions { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; }
+    .hero-scroll {
+      padding: 16px 40px;
+      display: flex;
+      justify-content: center;
+      position: relative;
+      z-index: 10;
+    }
+    .scroll-hint { color: rgba(255,255,255,0.35); font-size: 0.75rem; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+    .scroll-arrow { animation: bounce 2s infinite; font-size: 1.2rem; }
+    @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(6px)} }
 
+    /* ABOUT STRIP */
+    .about-strip {
+      background: var(--gold);
+      padding: 12px 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 40px;
+      flex-wrap: wrap;
+    }
+    .about-strip .strip-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--navy-dark);
+    }
+
+    /* FEATURES */
+    .features-section { padding: 70px 0; background: var(--white); }
+    .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; margin-top: 40px; }
+    .feature-card {
+      text-align: center;
+      padding: 32px 24px;
+      border-radius: var(--radius-md);
+      transition: var(--transition);
+      border: 1px solid transparent;
+    }
+    .feature-card:hover { border-color: var(--gray-200); box-shadow: var(--shadow-md); transform: translateY(-4px); }
+    .feature-icon { font-size: 2.2rem; margin-bottom: 16px; }
+    .feature-card h3 { font-size: 1rem; font-weight: 600; color: var(--gray-800); margin-bottom: 8px; }
+    .feature-card p { font-size: 0.875rem; color: var(--gray-500); line-height: 1.6; }
+
+    /* FACILITY STATUS BOARD */
+    .status-section { padding: 60px 0; background: var(--off-white); }
+    .status-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; margin-top: 28px; }
+    .status-item {
+      background: var(--white);
+      border-radius: var(--radius-md);
+      padding: 18px 20px;
+      border: 1px solid var(--gray-200);
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      box-shadow: var(--shadow-sm);
+      transition: var(--transition);
+    }
+    .status-item:hover { box-shadow: var(--shadow-md); }
+    .status-icon-wrap { font-size: 1.6rem; }
+    .status-text .s-name { font-size: 0.875rem; font-weight: 600; color: var(--gray-800); }
+    .status-text .s-label { margin-top: 4px; }
+
+    /* ANNOUNCEMENTS */
+    .ann-section { padding: 60px 0; background: var(--white); }
+    .ann-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 28px; margin-top: 28px; }
+    .ann-list { display: flex; flex-direction: column; gap: 14px; }
+
+    /* NOTICE PANEL */
+    .notice-panel {
+      background: linear-gradient(160deg, var(--navy-dark) 0%, var(--navy-mid) 100%);
+      border-radius: var(--radius-lg);
+      padding: 28px;
+      position: sticky;
+      top: 80px;
+    }
+    .notice-panel h3 { color: var(--gold); font-size: 0.85rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 18px; }
+    .notice-item { margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.07); }
+    .notice-item:last-child { border-bottom: none; margin-bottom: 0; }
+    .notice-item .n-title { font-size: 0.85rem; font-weight: 600; color: white; margin-bottom: 4px; }
+    .notice-item .n-sub { font-size: 0.75rem; color: rgba(255,255,255,0.5); }
+
+    /* CTA SECTION */
+    .cta-section {
+      background: linear-gradient(135deg, var(--navy-dark) 0%, var(--navy-mid) 100%);
+      padding: 80px 40px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .cta-section::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at center, rgba(201,168,76,0.08) 0%, transparent 70%);
+    }
+    .cta-section h2 { color: white; position: relative; margin-bottom: 12px; }
+    .cta-section p { color: rgba(255,255,255,0.65); position: relative; margin-bottom: 28px; }
+    .cta-actions { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; position: relative; }
+
+    /* FOOTER */
+    footer {
+      background: var(--navy-dark);
+      padding: 32px 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    footer p { font-size: 0.8rem; color: rgba(255,255,255,0.4); }
+    footer a { color: rgba(255,255,255,0.4); font-size: 0.8rem; transition: color 0.2s; }
+    footer a:hover { color: var(--gold-light); }
+
+    @media(max-width:768px) {
+      .hero-nav { padding: 16px 20px; }
+      .hero-body { padding: 24px 20px; }
+      .about-strip { padding: 12px 20px; gap: 16px; }
+      .features-grid { grid-template-columns: 1fr; gap: 16px; }
+      .ann-grid { grid-template-columns: 1fr; }
+      footer { flex-direction: column; text-align: center; padding: 24px 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- HERO / NAV -->
+<section class="hero">
+  <nav class="hero-nav">
+    <a href="index.html" class="kdu-logo-wrap inverted">
+      <span class="kdu-logo-placeholder"></span>
+      <div class="kdu-logo-text">
+        <span class="uni-name">Kyungdong University</span>
+        <span class="sys-name">Facility Management</span>
+      </div>
+    </a>
+    <div class="hero-nav-links">
+      <a href="#facilities">Facility Status</a>
+      <a href="#announcements">Notices</a>
+      <a href="login.html" class="btn btn-outline-white btn-sm">Sign In</a>
+      <a href="register.html" class="btn btn-gold btn-sm">Register</a>
+    </div>
+  </nav>
+
+  <div class="hero-body">
+    <svg class="hero-shield" viewBox="0 0 90 90" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="heroShieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#e2c07a"/>
+          <stop offset="100%" style="stop-color:#c9a84c"/>
+        </linearGradient>
+      </defs>
+      <path d="M45 4 L80 18 L80 50 C80 68 63 82 45 88 C27 82 10 68 10 50 L10 18 Z" fill="rgba(201,168,76,0.12)" stroke="url(#heroShieldGrad)" stroke-width="2"/>
+      <path d="M45 14 L70 24 L70 48 C70 62 58 73 45 78 C32 73 20 62 20 48 L20 24 Z" fill="rgba(201,168,76,0.08)" stroke="rgba(201,168,76,0.4)" stroke-width="1"/>
+      <text x="45" y="44" text-anchor="middle" font-family="Georgia, serif" font-size="14" font-weight="bold" fill="#c9a84c">KDU</text>
+      <path d="M28 58 Q45 64 62 58" fill="none" stroke="#c9a84c" stroke-width="1.5"/>
+      <circle cx="45" cy="51" r="6" fill="rgba(201,168,76,0.3)" stroke="#c9a84c" stroke-width="1"/>
+    </svg>
+    <p class="hero-pretitle">Kyungdong University Global Campus</p>
+    <h1>Your Voice.<br/>Our <span>Commitment</span>.</h1>
+    <p class="hero-sub">Submit facility complaints, track resolutions in real time, and stay updated on campus maintenance — all in one place.</p>
+    <div class="hero-actions">
+      <a href="register.html" class="btn btn-gold btn-lg">Get Started</a>
+      <a href="login.html" class="btn btn-outline-white btn-lg">Sign In</a>
+    </div>
+  </div>
+  <div class="hero-scroll">
+    <div class="scroll-hint">
+      <span>Scroll to explore</span>
+      <span class="scroll-arrow">↓</span>
+    </div>
+  </div>
+</section>
+
+<!-- ABOUT STRIP -->
+<div class="about-strip">
+  <div class="strip-item">🏛️ Goseong, Gangwon Province</div>
+  <div class="strip-item">📋 Online Complaint Portal</div>
+  <div class="strip-item">⚡ Real-Time Status Updates</div>
+  <div class="strip-item">🔒 Anonymous Reporting</div>
+</div>
+
+<!-- FACILITY STATUS STRIP (live) -->
+<div class="facility-status-strip" id="fac-strip">
+  <span class="strip-label">🏢 Live Facility Status</span>
+  <div class="strip-items" id="fac-strip-items">Loading…</div>
+</div>
+
+<!-- FEATURES -->
+<section class="features-section">
+  <div class="container">
+    <div class="text-center">
+      <h2>How It Works</h2>
+      <div style="width:50px;height:3px;background:var(--gold);margin:14px auto 0;border-radius:2px;"></div>
+      <p style="margin-top:12px;max-width:500px;margin-left:auto;margin-right:auto;">Streamlining communication between students and university administration for faster, fairer resolution.</p>
+    </div>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">📝</div>
+        <h3>Submit a Complaint</h3>
+        <p>Report facility issues — Wi-Fi, hostel, library, or any other problem — with location, urgency level, and optional photo evidence.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔍</div>
+        <h3>Track Your Case</h3>
+        <p>Every complaint gets a unique reference ID. Track the status, read admin responses, and follow your case from submission to resolution.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">✅</div>
+        <h3>Get It Resolved</h3>
+        <p>Admin updates your complaint status and writes a personal response. You're notified of every change so nothing falls through the cracks.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔒</div>
+        <h3>Report Anonymously</h3>
+        <p>Concerned about privacy? Enable anonymous submission and report your issue without revealing your identity.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📊</div>
+        <h3>Real-Time Status Board</h3>
+        <p>See which facilities are operational, under maintenance, or running with limited capacity — no login required.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📢</div>
+        <h3>Official Announcements</h3>
+        <p>Stay informed with the latest campus maintenance notices, schedule changes, and facility updates from the administration.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FACILITY STATUS BOARD -->
+<section class="status-section" id="facilities">
+  <div class="container">
+    <div class="text-center">
+      <h2>Facility Status Board</h2>
+      <div style="width:50px;height:3px;background:var(--gold);margin:14px auto 0;border-radius:2px;"></div>
+      <p style="margin-top:12px;">Live status of campus facilities — updated by administration.</p>
+    </div>
+    <div class="status-grid" id="status-grid">
+      <p>Loading...</p>
+    </div>
+  </div>
+</section>
+
+<!-- ANNOUNCEMENTS -->
+<section class="ann-section" id="announcements">
+  <div class="container">
+    <div class="ann-grid">
+      <div>
+        <h2>Latest Announcements</h2>
+        <p style="margin-top:8px;margin-bottom:0;">Official notices from the Facilities & Services office.</p>
+        <div class="ann-list" id="ann-list" style="margin-top:24px;">
+          <p>Loading...</p>
+        </div>
+        <a href="login.html" class="btn btn-outline mt-3" style="margin-top:20px;">View All Updates →</a>
+      </div>
+      <div>
+        <div class="notice-panel" id="notice-panel">
+          <h3>📋 Quick Actions</h3>
+          <div class="notice-item">
+            <div class="n-title">Submit a Complaint</div>
+            <div class="n-sub">Log in to report a facility issue</div>
+          </div>
+          <div class="notice-item">
+            <div class="n-title">Track Your Case</div>
+            <div class="n-sub">Check the status of your reports</div>
+          </div>
+          <div class="notice-item">
+            <div class="n-title">Anonymous Reporting</div>
+            <div class="n-sub">Submit without revealing identity</div>
+          </div>
+          <a href="register.html" class="btn btn-gold btn-block" style="margin-top:18px;">Create Account</a>
+          <a href="login.html" class="btn btn-outline-white btn-block" style="margin-top:8px;">Sign In</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+  <div class="container">
+    <h2>Ready to Make Campus Better?</h2>
+    <p>Register your account and start reporting facility issues today. Your feedback drives real improvements.</p>
+    <div class="cta-actions">
+      <a href="register.html" class="btn btn-gold btn-lg">Register as Student</a>
+      <a href="login.html" class="btn btn-outline-white btn-lg">Admin Login</a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="kdu-logo-wrap inverted">
+    <span class="kdu-logo-placeholder"></span>
+    <div class="kdu-logo-text">
+      <span class="uni-name">Kyungdong University</span>
+      <span class="sys-name">Facility Management System</span>
+    </div>
+  </div>
+  <div style="display:flex;gap:20px;flex-wrap:wrap;">
+    <a href="https://global.kduniv.ac.kr/global/" target="_blank">University Website</a>
+    <a href="login.html">Student Login</a>
+    <a href="admin-login.html">Admin Login</a>
+  </div>
+  <p>© 2025 Kyungdong University. All rights reserved.</p>
+</footer>
+
+<div id="toast-container"></div>
+
+<script src="../js/utils.js"></script>
+<script>
+  // Render facility status board
+  function renderFacilityBoard() {
+    const facilities = Store.get('kdu_facilities');
+    const icons = {
+      'Internet / Wi-Fi': '📶', 'Library': '📚', 'Hostel Block A': '🏠',
+      'Hostel Block B': '🏠', 'Sports Complex': '⚽', 'default': '🏢'
+    };
+    const statusLabels = {
+      operational: { label: 'Operational', badge: 'badge-operational' },
+      maintenance: { label: 'Under Maintenance', badge: 'badge-maintenance' },
+      limited: { label: 'Limited Service', badge: 'badge-limited' }
+    };
+
+    const grid = document.getElementById('status-grid');
+    if (!grid) return;
+    grid.innerHTML = facilities.map(f => `
+      <div class="status-item">
+        <div class="status-icon-wrap">${icons[f.name] || icons.default}</div>
+        <div class="status-text">
+          <div class="s-name">${f.name}</div>
+          <div class="s-label">
+            <span class="badge ${statusLabels[f.status]?.badge || ''}">${statusLabels[f.status]?.label || f.status}</span>
+          </div>
+        </div>
+      </div>
+    `).join('');
+
+    // Facility status strip
+    const strip = document.getElementById('fac-strip-items');
+    if (strip) {
+      strip.innerHTML = facilities.map(f => `
+        <div class="facility-item">
+          <span class="facility-dot ${f.status}"></span>
+          <span>${f.name}</span>
+        </div>
+      `).join('');
+    }
+  }
+
+  // Render announcements
+  function renderAnnouncements() {
+    const anns = Store.get('kdu_announcements').sort((a,b) => new Date(b.datePosted) - new Date(a.datePosted));
+    const list = document.getElementById('ann-list');
+    if (!list) return;
+    if (!anns.length) {
+      list.innerHTML = '<p style="color:var(--gray-400);font-size:0.875rem;">No announcements yet.</p>';
+      return;
+    }
+    list.innerHTML = anns.slice(0, 4).map(ann => `
+      <div class="announcement-card">
+        <div class="ann-header">
+          <h4>${ann.title}</h4>
+          <span class="ann-date">${timeAgo(ann.datePosted)}</span>
+        </div>
+        <p>${ann.message}</p>
+        <div class="ann-facility">
+          <span class="chip chip-navy">${ann.facility}</span>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    // Redirect if already logged in
+    if (Auth.isLoggedIn()) {
+      const session = Store.getOne('kdu_session');
+      if (session?.role === 'admin') window.location.href = 'admin-dashboard.html';
+      else window.location.href = 'dashboard-student.html';
+    }
+    renderFacilityBoard();
+    renderAnnouncements();
+  });
+</script>
+</body>
+</html>
