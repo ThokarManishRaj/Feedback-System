@@ -1,1 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Manage Facilities — KDU Admin</title>
+  <link rel="stylesheet" href="../css/style.css"/>
+  <link rel="stylesheet" href="../css/dashboard.css"/>
+  <style>
+    .facilities-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    .fac-item-card {
+      background: white;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-md);
+      padding: 18px 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 12px;
+      transition: var(--transition);
+    }
+    .fac-item-card:hover { box-shadow: var(--shadow-md); }
+    .fac-item-card .fic-icon { font-size: 1.6rem; flex-shrink: 0; }
+    .fac-item-card .fic-info { flex: 1; min-width: 0; }
+    .fac-item-card .fic-name { font-size: 0.9rem; font-weight: 600; color: var(--gray-800); }
+    .fac-item-card .fic-updated { font-size: 0.72rem; color: var(--gray-400); margin-top: 3px; }
+    .fac-item-card .fic-actions { display: flex; gap: 6px; flex-shrink: 0; flex-wrap: wrap; }
+    .status-select-mini {
+      font-size: 0.78rem;
+      border: 1.5px solid var(--gray-200);
+      border-radius: 6px;
+      padding: 5px 8px;
+      font-family: var(--font-body);
+      color: var(--gray-700);
+      background: white;
+      cursor: pointer;
+    }
 
+    .ann-item {
+      background: white;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-md);
+      padding: 16px 18px;
+      border-left: 4px solid var(--gold);
+      margin-bottom: 10px;
+      transition: var(--transition);
+    }
+    .ann-item:hover { box-shadow: var(--shadow-md); }
+    .ann-item-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+    .ann-item-header h4 { font-size: 0.9rem; font-weight: 600; color: var(--gray-800); }
+    .ann-item-meta { display: flex; gap: 8px; align-items: center; margin-top: 4px; flex-wrap: wrap; }
+    .ann-item p { font-size: 0.82rem; color: var(--gray-600); margin-top: 8px; line-height: 1.5; }
+
+    .add-form-card {
+      background: white;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+    .add-form-card .afc-header {
+      background: var(--navy-dark);
+      padding: 16px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .add-form-card .afc-header h3 { color: white; font-family: var(--font-body); font-size: 0.95rem; font-weight: 600; }
+    .add-form-card .afc-body { padding: 20px; }
+
+    @media(max-width:900px) { .facilities-grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body data-page="admin-facilities">
+<div class="dashboard-layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <span class="kdu-logo-placeholder"></span>
+      <div class="kdu-logo-text">
+        <span class="uni-name" style="color:white;">KDU Admin</span>
+        <span class="sys-name">Management Console</span>
+      </div>
+    </div>
+    <div class="sidebar-user-strip">
+      <div class="sidebar-avatar" id="sidebar-avatar" style="background:linear-gradient(135deg,#c9a84c,#a07830);">A</div>
+      <div class="sidebar-user-info">
+        <div class="sidebar-user-name" id="sidebar-username">Administrator</div>
+        <div class="sidebar-user-role" style="color:var(--gold-light);">Admin</div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Overview</div>
+      <a class="nav-item" data-id="dashboard" href="admin-dashboard.html"><span class="nav-icon">📊</span> Dashboard</a>
+      <div class="nav-section-label" style="margin-top:8px;">Management</div>
+      <a class="nav-item" data-id="complaints" href="admin-complaints.html"><span class="nav-icon">📋</span> Complaints <span class="nav-badge" id="pending-admin-badge">0</span></a>
+      <a class="nav-item" data-id="facilities" href="admin-facilities.html"><span class="nav-icon">🏢</span> Facilities</a>
+      <a class="nav-item" data-id="reports" href="admin-reports.html"><span class="nav-icon">📈</span> Reports</a>
+      <div class="nav-section-label" style="margin-top:8px;">Portal</div>
+      <a class="nav-item" href="index.html"><span class="nav-icon">🌐</span> Public Portal</a>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="nav-item" onclick="Auth.logout()"><span class="nav-icon">🚪</span> Sign Out</button>
+    </div>
+  </aside>
+  <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+  <div class="main-content">
+    <div class="main-topbar">
+      <button class="hamburger" id="hamburger">☰</button>
+      <div class="breadcrumb"><a href="admin-dashboard.html">Dashboard</a> › <strong>Facilities</strong></div>
+    </div>
+
+    <div class="main-page">
+      <div class="facilities-grid">
+
+        <!-- LEFT: FACILITY STATUS MANAGEMENT -->
+        <div>
+          <div class="add-form-card">
+            <div class="afc-header">
+              <h3>🏢 Facility Status Management</h3>
+            </div>
+            <div class="afc-body">
+              <p style="font-size:0.82rem;color:var(--gray-500);margin-bottom:16px;">Update the operational status of each campus facility. Changes are immediately visible to all students on the public portal.</p>
+              <div id="fac-list">
+                <p style="color:var(--gray-400);">Loading…</p>
+              </div>
+              <hr class="divider"/>
+              <h4 style="font-size:0.875rem;font-weight:600;color:var(--gray-700);margin-bottom:14px;font-family:var(--font-body);">➕ Add New Facility</h4>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Facility Name</label>
+                  <input class="form-input" type="text" id="new-fac-name" placeholder="e.g. Computer Lab C"/>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Initial Status</label>
+                  <select class="form-select" id="new-fac-status">
+                    <option value="operational">Operational</option>
+                    <option value="limited">Limited Service</option>
+                    <option value="maintenance">Under Maintenance</option>
+                  </select>
+                </div>
+              </div>
+              <button class="btn btn-primary btn-sm" onclick="addFacility()">Add Facility</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT: ANNOUNCEMENTS -->
+        <div id="announcements">
+          <div class="add-form-card">
+            <div class="afc-header">
+              <h3>📢 Post Announcement</h3>
+            </div>
+            <div class="afc-body">
+              <div class="form-group">
+                <label class="form-label">Announcement Title <span class="req">*</span></label>
+                <input class="form-input" type="text" id="ann-title" placeholder="e.g. Library Extended Hours for Finals Week"/>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Message <span class="req">*</span></label>
+                <textarea class="form-textarea" id="ann-message" rows="4" placeholder="Write the full announcement message that students will see…"></textarea>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Related Facility</label>
+                <select class="form-select" id="ann-facility">
+                  <option value="General">General</option>
+                  <option>Internet / Wi-Fi</option>
+                  <option>Library</option>
+                  <option>Hostel Block A</option>
+                  <option>Hostel Block B</option>
+                  <option>Sports Complex</option>
+                  <option>Classroom</option>
+                  <option>Other</option>
+                </select>
+              </div>
+              <button class="btn btn-primary btn-block" onclick="postAnnouncement()">📢 Post Announcement</button>
+            </div>
+          </div>
+
+          <!-- EXISTING ANNOUNCEMENTS -->
+          <div class="card">
+            <div class="card-header">
+              <h3 style="font-family:var(--font-body);font-size:0.95rem;font-weight:600;">Recent Announcements</h3>
+              <span id="ann-count" style="font-size:0.78rem;color:var(--gray-400);"></span>
+            </div>
+            <div style="padding:16px;" id="ann-list">
+              <p style="color:var(--gray-400);text-align:center;padding:20px;font-size:0.85rem;">No announcements yet.</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+<script src="../js/utils.js"></script>
+<script>
+  const facIcons = {
+    'Internet / Wi-Fi':'📶','Library':'📚','Hostel Block A':'🏠',
+    'Hostel Block B':'🏠','Sports Complex':'⚽','default':'🏢'
+  };
+  const statusOptions = [
+    {value:'operational', label:'Operational'},
+    {value:'limited', label:'Limited Service'},
+    {value:'maintenance', label:'Under Maintenance'}
+  ];
+
+  document.addEventListener('DOMContentLoaded', () => {
+    if (!Auth.requireAuth('admin')) return;
+    initSidebarNav('facilities');
+    const pending = Store.get('kdu_complaints').filter(c=>c.status==='Pending').length;
+    const pb = document.getElementById('pending-admin-badge');
+    if (pb) pb.textContent = pending;
+    renderFacilities();
+    renderAnnouncements();
+  });
+
+  function renderFacilities() {
+    const facs = Store.get('kdu_facilities');
+    const list = document.getElementById('fac-list');
+    list.innerHTML = facs.map(f => `
+      <div class="fac-item-card">
+        <div class="fic-icon">${facIcons[f.name]||facIcons.default}</div>
+        <div class="fic-info">
+          <div class="fic-name">${f.name}</div>
+          <div class="fic-updated">Updated ${timeAgo(f.lastUpdated)}</div>
+        </div>
+        <div class="fic-actions">
+          <select class="status-select-mini" onchange="updateFacilityStatus('${f.id}', this.value)">
+            ${statusOptions.map(s => `<option value="${s.value}" ${f.status===s.value?'selected':''}>${s.label}</option>`).join('')}
+          </select>
+          <button class="btn btn-ghost btn-sm" onclick="deleteFacility('${f.id}')" title="Delete" style="color:var(--red);padding:5px 8px;">🗑</button>
+        </div>
+      </div>
+    `).join('') || '<p style="color:var(--gray-400);text-align:center;padding:20px;">No facilities added yet.</p>';
+  }
+
+  function updateFacilityStatus(id, status) {
+    Store.update('kdu_facilities', id, { status, lastUpdated: new Date().toISOString() });
+    renderFacilities();
+    showToast(`Facility status updated to "${status}"`, 'success');
+  }
+
+  function deleteFacility(id) {
+    if (!confirm('Delete this facility?')) return;
+    Store.delete('kdu_facilities', id);
+    renderFacilities();
+    showToast('Facility removed', 'info');
+  }
+
+  function addFacility() {
+    const name = document.getElementById('new-fac-name').value.trim();
+    const status = document.getElementById('new-fac-status').value;
+    if (!name) { showToast('Please enter a facility name', 'error'); return; }
+    Store.push('kdu_facilities', {
+      id: generateId('FAC'), name, status,
+      lastUpdated: new Date().toISOString()
+    });
+    document.getElementById('new-fac-name').value = '';
+    renderFacilities();
+    showToast(`"${name}" added`, 'success');
+  }
+
+  function postAnnouncement() {
+    const title = document.getElementById('ann-title').value.trim();
+    const message = document.getElementById('ann-message').value.trim();
+    const facility = document.getElementById('ann-facility').value;
+    if (!title || !message) { showToast('Title and message are required', 'error'); return; }
+    const user = Auth.getUser();
+    Store.push('kdu_announcements', {
+      id: generateId('ANN'), title, message, facility,
+      datePosted: new Date().toISOString(),
+      postedBy: user?.id || 'admin'
+    });
+    document.getElementById('ann-title').value = '';
+    document.getElementById('ann-message').value = '';
+    renderAnnouncements();
+    showToast('Announcement posted!', 'success');
+  }
+
+  function deleteAnnouncement(id) {
+    if (!confirm('Delete this announcement?')) return;
+    Store.delete('kdu_announcements', id);
+    renderAnnouncements();
+    showToast('Announcement deleted', 'info');
+  }
+
+  function renderAnnouncements() {
+    const anns = Store.get('kdu_announcements').sort((a,b)=>new Date(b.datePosted)-new Date(a.datePosted));
+    const list = document.getElementById('ann-list');
+    const countEl = document.getElementById('ann-count');
+    if (countEl) countEl.textContent = `${anns.length} total`;
+
+    list.innerHTML = anns.length ? anns.map(a => `
+      <div class="ann-item">
+        <div class="ann-item-header">
+          <div>
+            <h4>${a.title}</h4>
+            <div class="ann-item-meta">
+              <span class="chip chip-navy" style="font-size:0.7rem;">${a.facility}</span>
+              <span style="font-size:0.72rem;color:var(--gray-400);">${timeAgo(a.datePosted)}</span>
+            </div>
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="deleteAnnouncement('${a.id}')" style="color:var(--red);flex-shrink:0;">🗑 Delete</button>
+        </div>
+        <p>${a.message}</p>
+      </div>
+    `).join('') : '<p style="color:var(--gray-400);text-align:center;padding:20px;font-size:0.85rem;">No announcements yet.</p>';
+  }
+</script>
+</body>
+</html>
