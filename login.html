@@ -1,1 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sign In — KDU Facility Management</title>
+  <link rel="stylesheet" href="../css/style.css"/>
+  <style>
+    body {
+      min-height: 100vh;
+      background: linear-gradient(135deg, var(--navy-dark) 0%, var(--navy-mid) 60%, var(--navy-light) 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      position: relative;
+    }
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none'%3E%3Cg fill='%23c9a84c' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    }
+    .login-card {
+      background: white;
+      border-radius: var(--radius-lg);
+      box-shadow: 0 24px 80px rgba(0,0,0,0.3);
+      width: 100%;
+      max-width: 440px;
+      padding: 40px;
+      position: relative;
+      z-index: 1;
+      animation: fadeUp 0.4s ease;
+    }
+    @keyframes fadeUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
 
+    .login-logo { display: flex; justify-content: center; margin-bottom: 28px; }
+    .login-logo .kdu-logo-wrap { gap: 14px; }
+    .login-logo .uni-name { font-size: 1.15rem; }
+
+    .login-header { text-align: center; margin-bottom: 28px; }
+    .login-header h1 { font-size: 1.5rem; color: var(--gray-800); }
+    .login-header p { font-size: 0.875rem; color: var(--gray-500); margin-top: 6px; }
+
+    /* ROLE TABS */
+    .role-tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 24px;
+      background: var(--gray-100);
+      border-radius: var(--radius-md);
+      padding: 5px;
+    }
+    .role-tab {
+      padding: 10px;
+      border-radius: calc(var(--radius-md) - 3px);
+      text-align: center;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--gray-500);
+      transition: var(--transition);
+      border: none;
+      background: transparent;
+    }
+    .role-tab:hover { color: var(--gray-700); }
+    .role-tab.active {
+      background: white;
+      color: var(--navy);
+      box-shadow: var(--shadow-sm);
+    }
+    .role-tab .tab-icon { font-size: 1.1rem; display: block; margin-bottom: 3px; }
+
+    .admin-hint {
+      background: #fef9ee;
+      border: 1px solid #fde68a;
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      font-size: 0.8rem;
+      color: #92400e;
+      margin-bottom: 18px;
+      display: none;
+    }
+    .admin-hint strong { color: #78350f; }
+
+    .forgot-link { font-size: 0.82rem; color: var(--navy); font-weight: 500; text-align: right; display: block; margin-top: -10px; margin-bottom: 16px; }
+
+    .login-footer { text-align: center; margin-top: 20px; }
+    .login-footer p { font-size: 0.85rem; color: var(--gray-500); }
+    .login-footer a { color: var(--navy); font-weight: 600; }
+    .login-divider { border: none; border-top: 1px solid var(--gray-200); margin: 16px 0; }
+    .back-home { display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 0.8rem; color: rgba(255,255,255,0.5); text-decoration: none; position: relative; z-index: 1; margin-top: 20px; transition: color 0.2s; }
+    .back-home:hover { color: rgba(255,255,255,0.8); }
+
+    @keyframes shake { 0%,100%{transform:translateX(0)} 20%,60%{transform:translateX(-6px)} 40%,80%{transform:translateX(6px)} }
+    .shake { animation: shake 0.4s ease; }
+  </style>
+</head>
+<body data-page="login">
+
+  <div style="position:fixed;inset:0;z-index:0;pointer-events:none;">
+    <!-- Background decoration circles -->
+    <div style="position:absolute;top:-100px;right:-100px;width:400px;height:400px;border-radius:50%;background:radial-gradient(circle,rgba(201,168,76,0.07) 0%,transparent 70%);"></div>
+    <div style="position:absolute;bottom:-80px;left:-80px;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,rgba(201,168,76,0.05) 0%,transparent 70%);"></div>
+  </div>
+
+  <div>
+    <div class="login-card">
+      <!-- Logo -->
+      <div class="login-logo">
+        <a href="index.html" class="kdu-logo-wrap">
+          <span class="kdu-logo-placeholder"></span>
+          <div class="kdu-logo-text">
+            <span class="uni-name">Kyungdong University</span>
+            <span class="sys-name">Facility Management</span>
+          </div>
+        </a>
+      </div>
+
+      <!-- Role selector -->
+      <div class="role-tabs">
+        <button class="role-tab active" data-role="student">
+          <span class="tab-icon">👨‍🎓</span>Student
+        </button>
+        <button class="role-tab" data-role="admin">
+          <span class="tab-icon">🏛️</span>Administrator
+        </button>
+      </div>
+
+      <div class="admin-hint" id="admin-hint">
+        <strong>Demo admin credentials:</strong><br/>
+        Email: admin@kdu.edu &nbsp;|&nbsp; Password: admin123
+      </div>
+
+      <div class="login-header">
+        <h1>Welcome Back</h1>
+        <p>Sign in to access the KDU Facility Portal</p>
+      </div>
+
+      <form id="login-form" novalidate>
+        <div class="form-group">
+          <label class="form-label" for="email">Email Address</label>
+          <input class="form-input" type="email" id="email" name="email" placeholder="your@email.com" autocomplete="email" autofocus/>
+          <div class="form-error" id="err-login-email"></div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="password">Password</label>
+          <input class="form-input" type="password" id="password" name="password" placeholder="Enter your password" autocomplete="current-password"/>
+          <div class="form-error" id="err-login-password"></div>
+        </div>
+
+        <a href="#" class="forgot-link">Forgot password?</a>
+
+        <button type="submit" class="btn btn-primary btn-block btn-lg">Sign In →</button>
+      </form>
+
+      <hr class="login-divider"/>
+      <div class="login-footer">
+        <p>Don't have an account? <a href="register.html">Register here</a></p>
+      </div>
+    </div>
+
+    <a href="index.html" class="back-home">← Back to Home</a>
+  </div>
+
+  <div id="toast-container"></div>
+  <script src="../js/utils.js"></script>
+  <script src="../js/auth.js"></script>
+</body>
+</html>
