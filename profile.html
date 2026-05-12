@@ -1,1 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>My Profile — KDU Facility Management</title>
+  <link rel="stylesheet" href="../css/style.css"/>
+  <link rel="stylesheet" href="../css/dashboard.css"/>
+  <style>
+    .profile-hero {
+      background: linear-gradient(135deg, var(--navy-dark) 0%, var(--navy-mid) 100%);
+      border-radius: var(--radius-lg);
+      padding: 32px;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      margin-bottom: 24px;
+      position: relative;
+      overflow: hidden;
+    }
+    .profile-hero::before {
+      content: '';
+      position: absolute;
+      right: -40px; top: -40px;
+      width: 200px; height: 200px;
+      border-radius: 50%;
+      background: rgba(201,168,76,0.07);
+    }
+    .profile-avatar-big {
+      width: 80px; height: 80px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2rem; font-weight: 700; color: var(--navy-dark);
+      flex-shrink: 0;
+      border: 3px solid rgba(255,255,255,0.2);
+      position: relative; z-index: 1;
+    }
+    .profile-info { position: relative; z-index: 1; }
+    .profile-info h2 { color: white; font-size: 1.4rem; }
+    .profile-info .p-role { color: var(--gold-light); font-size: 0.8rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; margin-top: 4px; }
+    .profile-info .p-meta { color: rgba(255,255,255,0.55); font-size: 0.85rem; margin-top: 6px; display: flex; flex-wrap: wrap; gap: 12px; }
+    .profile-info .p-meta span { display: flex; align-items: center; gap: 5px; }
+    .profile-actions { margin-left: auto; position: relative; z-index: 1; display: flex; gap: 8px; }
 
+    .profile-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+    .info-row {
+      display: flex;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--gray-100);
+      align-items: flex-start;
+      gap: 12px;
+    }
+    .info-row:last-child { border-bottom: none; }
+    .info-label { font-size: 0.78rem; font-weight: 600; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.06em; min-width: 120px; padding-top: 1px; }
+    .info-val { font-size: 0.875rem; color: var(--gray-800); font-weight: 500; }
+
+    .activity-bar {
+      background: var(--gray-100);
+      border-radius: 99px;
+      height: 8px;
+      overflow: hidden;
+      margin-top: 6px;
+    }
+    .activity-fill {
+      height: 100%;
+      border-radius: 99px;
+      background: linear-gradient(90deg, var(--navy) 0%, var(--navy-light) 100%);
+      transition: width 1s ease;
+    }
+    .activity-fill.green { background: linear-gradient(90deg, var(--green), #4ade80); }
+    .activity-fill.orange { background: linear-gradient(90deg, var(--orange), #fb923c); }
+    .activity-fill.red { background: linear-gradient(90deg, var(--red), #f87171); }
+
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--gray-100);
+    }
+    .stat-row:last-child { border-bottom: none; }
+    .stat-row .sr-label { font-size: 0.82rem; color: var(--gray-600); display: flex; align-items: center; gap: 8px; }
+    .stat-row .sr-val { font-size: 0.9rem; font-weight: 700; color: var(--gray-800); }
+
+    .edit-form { display: none; }
+    .edit-form.active { display: block; }
+    .view-mode.hidden { display: none; }
+
+    .danger-zone {
+      border: 1px solid #fecaca;
+      border-radius: var(--radius-md);
+      padding: 20px;
+      background: #fff5f5;
+    }
+    .danger-zone h4 { color: var(--red); font-size: 0.875rem; font-weight: 700; margin-bottom: 8px; font-family: var(--font-body); }
+    .danger-zone p { font-size: 0.8rem; color: var(--gray-500); margin-bottom: 14px; }
+
+    /* Category breakdown */
+    .cat-bar { margin-bottom: 10px; }
+    .cat-bar .cb-header { display: flex; justify-content: space-between; margin-bottom: 4px; }
+    .cat-bar .cb-label { font-size: 0.78rem; color: var(--gray-600); font-weight: 500; }
+    .cat-bar .cb-count { font-size: 0.78rem; color: var(--gray-400); }
+
+    @media(max-width:768px) {
+      .profile-hero { flex-direction: column; align-items: flex-start; }
+      .profile-actions { margin-left: 0; }
+      .profile-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body data-page="profile">
+<div class="dashboard-layout">
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <span class="kdu-logo-placeholder"></span>
+      <div class="kdu-logo-text">
+        <span class="uni-name" style="color:white;">Kyungdong Univ.</span>
+        <span class="sys-name">Facility Portal</span>
+      </div>
+    </div>
+    <div class="sidebar-user-strip">
+      <div class="sidebar-avatar" id="sidebar-avatar">S</div>
+      <div class="sidebar-user-info">
+        <div class="sidebar-user-name" id="sidebar-username">Loading...</div>
+        <div class="sidebar-user-role">Student</div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Main</div>
+      <a class="nav-item" data-id="dashboard" href="dashboard-student.html"><span class="nav-icon">🏠</span> Dashboard</a>
+      <a class="nav-item" data-id="submit" href="submit-complaint.html"><span class="nav-icon">📝</span> Submit Complaint</a>
+      <a class="nav-item" data-id="track" href="track-complaint.html"><span class="nav-icon">🔍</span> Track Complaints<span class="nav-badge" id="pending-badge" style="display:none;">0</span></a>
+      <div class="nav-section-label" style="margin-top:8px;">Account</div>
+      <a class="nav-item" data-id="profile" href="profile.html"><span class="nav-icon">👤</span> My Profile</a>
+      <a class="nav-item" data-id="index" href="index.html"><span class="nav-icon">🌐</span> Public Board</a>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="nav-item" onclick="Auth.logout()"><span class="nav-icon">🚪</span> Sign Out</button>
+    </div>
+  </aside>
+  <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+  <div class="main-content">
+    <div class="main-topbar">
+      <button class="hamburger" id="hamburger">☰</button>
+      <div class="breadcrumb"><a href="dashboard-student.html">Dashboard</a> › <strong>My Profile</strong></div>
+    </div>
+
+    <div class="main-page">
+      <!-- PROFILE HERO -->
+      <div class="profile-hero">
+        <div class="profile-avatar-big" id="profile-avatar-big">S</div>
+        <div class="profile-info">
+          <h2 id="p-name">Loading…</h2>
+          <div class="p-role">Student · Kyungdong University</div>
+          <div class="p-meta">
+            <span>🎓 <span id="p-faculty">—</span></span>
+            <span>📅 Year <span id="p-year">—</span></span>
+            <span>🪪 <span id="p-sid">—</span></span>
+          </div>
+        </div>
+        <div class="profile-actions">
+          <button class="btn btn-outline-white btn-sm" onclick="toggleEdit()">✏️ Edit Profile</button>
+        </div>
+      </div>
+
+      <div class="profile-grid">
+        <!-- LEFT: Account Info -->
+        <div style="display:flex;flex-direction:column;gap:16px;">
+
+          <!-- VIEW MODE -->
+          <div class="card view-mode" id="view-mode">
+            <div class="card-header">
+              <h3 style="font-family:var(--font-body);font-size:0.95rem;font-weight:600;">👤 Account Information</h3>
+              <button class="btn btn-ghost btn-sm" onclick="toggleEdit()">Edit</button>
+            </div>
+            <div class="card-body">
+              <div class="info-row"><span class="info-label">Full Name</span><span class="info-val" id="v-name">—</span></div>
+              <div class="info-row"><span class="info-label">Student ID</span><span class="info-val" id="v-sid">—</span></div>
+              <div class="info-row"><span class="info-label">Email</span><span class="info-val" id="v-email">—</span></div>
+              <div class="info-row"><span class="info-label">Faculty</span><span class="info-val" id="v-faculty">—</span></div>
+              <div class="info-row"><span class="info-label">Year of Study</span><span class="info-val" id="v-year">—</span></div>
+              <div class="info-row"><span class="info-label">Member Since</span><span class="info-val" id="v-joined">—</span></div>
+            </div>
+          </div>
+
+          <!-- EDIT MODE -->
+          <div class="card edit-form" id="edit-form">
+            <div class="card-header">
+              <h3 style="font-family:var(--font-body);font-size:0.95rem;font-weight:600;">✏️ Edit Profile</h3>
+              <button class="btn btn-ghost btn-sm" onclick="toggleEdit()">Cancel</button>
+            </div>
+            <div class="card-body">
+              <div class="form-group">
+                <label class="form-label">Full Name</label>
+                <input class="form-input" type="text" id="edit-name" placeholder="Your full name"/>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Faculty / Department</label>
+                <select class="form-select" id="edit-faculty">
+                  <option>College of Health Sciences</option>
+                  <option>College of Social Welfare</option>
+                  <option>College of Arts & Design</option>
+                  <option>College of Humanities & Social Sciences</option>
+                  <option>College of Engineering</option>
+                  <option>College of Natural Sciences</option>
+                  <option>School of Business Administration</option>
+                  <option>School of International Studies</option>
+                  <option>Graduate School</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Year of Study</label>
+                <select class="form-select" id="edit-year">
+                  <option value="1">1st Year</option>
+                  <option value="2">2nd Year</option>
+                  <option value="3">3rd Year</option>
+                  <option value="4">4th Year</option>
+                  <option value="graduate">Graduate</option>
+                </select>
+              </div>
+              <hr class="divider"/>
+              <p style="font-size:0.8rem;color:var(--gray-400);margin-bottom:14px;">Change password (leave blank to keep current)</p>
+              <div class="form-group">
+                <label class="form-label">New Password</label>
+                <input class="form-input" type="password" id="edit-password" placeholder="New password (min. 6 chars)"/>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Confirm New Password</label>
+                <input class="form-input" type="password" id="edit-confirm" placeholder="Re-enter new password"/>
+              </div>
+              <button class="btn btn-primary btn-block" onclick="saveProfile()">Save Changes</button>
+            </div>
+          </div>
+
+          <!-- DANGER ZONE -->
+          <div class="danger-zone">
+            <h4>⚠️ Sign Out</h4>
+            <p>This will end your current session. You can sign back in at any time.</p>
+            <button class="btn btn-danger btn-sm" onclick="Auth.logout()">Sign Out Now</button>
+          </div>
+        </div>
+
+        <!-- RIGHT: Stats -->
+        <div style="display:flex;flex-direction:column;gap:16px;">
+
+          <!-- COMPLAINT STATS -->
+          <div class="card">
+            <div class="card-header">
+              <h3 style="font-family:var(--font-body);font-size:0.95rem;font-weight:600;">📊 Complaint Statistics</h3>
+            </div>
+            <div class="card-body">
+              <div class="stat-row">
+                <span class="sr-label">📋 Total Submitted</span>
+                <span class="sr-val" id="s-total">0</span>
+              </div>
+              <div class="stat-row">
+                <span class="sr-label"><span class="badge badge-pending" style="font-size:0.7rem;">Pending</span></span>
+                <span class="sr-val" id="s-pending">0</span>
+              </div>
+              <div class="stat-row">
+                <span class="sr-label"><span class="badge badge-in-progress" style="font-size:0.7rem;">In Progress</span></span>
+                <span class="sr-val" id="s-progress">0</span>
+              </div>
+              <div class="stat-row">
+                <span class="sr-label"><span class="badge badge-resolved" style="font-size:0.7rem;">Resolved</span></span>
+                <span class="sr-val" id="s-resolved">0</span>
+              </div>
+              <div class="stat-row">
+                <span class="sr-label">📈 Resolution Rate</span>
+                <span class="sr-val" id="s-rate">—</span>
+              </div>
+              <div class="activity-bar" style="margin-top:12px;">
+                <div class="activity-fill green" id="rate-bar" style="width:0%;"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- BY CATEGORY -->
+          <div class="card">
+            <div class="card-header">
+              <h3 style="font-family:var(--font-body);font-size:0.95rem;font-weight:600;">🏷️ By Category</h3>
+            </div>
+            <div class="card-body" id="cat-breakdown">
+              <p style="font-size:0.85rem;color:var(--gray-400);">No complaints yet.</p>
+            </div>
+          </div>
+
+          <!-- RECENT ACTIVITY -->
+          <div class="card">
+            <div class="card-header">
+              <h3 style="font-family:var(--font-body);font-size:0.95rem;font-weight:600;">🕐 Recent Activity</h3>
+            </div>
+            <div class="card-body" id="recent-activity">
+              <p style="font-size:0.85rem;color:var(--gray-400);">No recent activity.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+<script src="../js/utils.js"></script>
+<script>
+  let currentUser = null;
+
+  document.addEventListener('DOMContentLoaded', () => {
+    if (!Auth.requireAuth('student')) return;
+    currentUser = Auth.getUser();
+    if (!currentUser) return;
+    initSidebarNav('profile');
+    renderProfile();
+    renderStats();
+  });
+
+  function renderProfile() {
+    const u = currentUser;
+    // Hero
+    document.getElementById('profile-avatar-big').textContent = u.name.charAt(0).toUpperCase();
+    document.getElementById('p-name').textContent = u.name;
+    document.getElementById('p-faculty').textContent = u.faculty || '—';
+    document.getElementById('p-year').textContent = u.year ? `${u.year}` : '—';
+    document.getElementById('p-sid').textContent = u.studentId || '—';
+    // View fields
+    document.getElementById('v-name').textContent = u.name;
+    document.getElementById('v-sid').textContent = u.studentId || '—';
+    document.getElementById('v-email').textContent = u.email;
+    document.getElementById('v-faculty').textContent = u.faculty || '—';
+    document.getElementById('v-year').textContent = u.year ? `Year ${u.year}` : '—';
+    document.getElementById('v-joined').textContent = formatDate(u.createdAt, true) || 'N/A';
+    // Edit fields
+    document.getElementById('edit-name').value = u.name;
+    document.getElementById('edit-faculty').value = u.faculty || '';
+    document.getElementById('edit-year').value = u.year || '';
+  }
+
+  function renderStats() {
+    const complaints = Store.get('kdu_complaints').filter(c => c.studentId === currentUser.id);
+    const total = complaints.length;
+    const pending = complaints.filter(c => c.status === 'Pending').length;
+    const progress = complaints.filter(c => c.status === 'In Progress').length;
+    const resolved = complaints.filter(c => c.status === 'Resolved').length;
+    const rate = total > 0 ? Math.round((resolved / total) * 100) : 0;
+
+    document.getElementById('s-total').textContent = total;
+    document.getElementById('s-pending').textContent = pending;
+    document.getElementById('s-progress').textContent = progress;
+    document.getElementById('s-resolved').textContent = resolved;
+    document.getElementById('s-rate').textContent = total > 0 ? `${rate}%` : '—';
+    setTimeout(() => { document.getElementById('rate-bar').style.width = rate + '%'; }, 100);
+
+    // By category
+    const cats = {};
+    complaints.forEach(c => { cats[c.category] = (cats[c.category] || 0) + 1; });
+    const catEl = document.getElementById('cat-breakdown');
+    if (Object.keys(cats).length === 0) {
+      catEl.innerHTML = '<p style="font-size:0.85rem;color:var(--gray-400);">No complaints yet.</p>';
+    } else {
+      const sorted = Object.entries(cats).sort((a,b) => b[1]-a[1]);
+      catEl.innerHTML = sorted.map(([cat, count]) => `
+        <div class="cat-bar">
+          <div class="cb-header"><span class="cb-label">${cat}</span><span class="cb-count">${count}</span></div>
+          <div class="activity-bar"><div class="activity-fill" style="width:${Math.round((count/total)*100)}%;"></div></div>
+        </div>
+      `).join('');
+    }
+
+    // Recent activity
+    const recent = [...complaints].sort((a,b) => new Date(b.lastUpdated)-new Date(a.lastUpdated)).slice(0,4);
+    const actEl = document.getElementById('recent-activity');
+    if (!recent.length) {
+      actEl.innerHTML = '<p style="font-size:0.85rem;color:var(--gray-400);">No recent activity.</p>';
+    } else {
+      actEl.innerHTML = recent.map(c => `
+        <div style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--gray-100);">
+          <span style="font-size:1rem;flex-shrink:0;">${c.status==='Resolved'?'✅':c.status==='In Progress'?'🔧':'⏳'}</span>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:0.82rem;font-weight:600;color:var(--gray-800);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${c.title}</div>
+            <div style="display:flex;justify-content:space-between;margin-top:2px;">
+              ${statusBadge(c.status)}
+              <span style="font-size:0.72rem;color:var(--gray-400);">${timeAgo(c.lastUpdated)}</span>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+  }
+
+  function toggleEdit() {
+    const editForm = document.getElementById('edit-form');
+    const viewMode = document.getElementById('view-mode');
+    editForm.classList.toggle('active');
+    viewMode.classList.toggle('hidden');
+  }
+
+  function saveProfile() {
+    const name = document.getElementById('edit-name').value.trim();
+    const faculty = document.getElementById('edit-faculty').value;
+    const year = document.getElementById('edit-year').value;
+    const newPass = document.getElementById('edit-password').value;
+    const confirm = document.getElementById('edit-confirm').value;
+
+    if (!name) { showToast('Name cannot be empty', 'error'); return; }
+    if (newPass && newPass.length < 6) { showToast('Password must be at least 6 characters', 'error'); return; }
+    if (newPass && newPass !== confirm) { showToast('Passwords do not match', 'error'); return; }
+
+    const updates = { name, faculty, year };
+    if (newPass) updates.password = newPass;
+
+    Store.update('kdu_users', currentUser.id, updates);
+    // Reload user
+    currentUser = Auth.getUser();
+    // Refresh sidebar name
+    const nameEl = document.getElementById('sidebar-username');
+    if (nameEl) nameEl.textContent = currentUser.name;
+    const avatarEl = document.getElementById('sidebar-avatar');
+    if (avatarEl) avatarEl.textContent = currentUser.name.charAt(0).toUpperCase();
+
+    renderProfile();
+    toggleEdit();
+    showToast('Profile updated successfully!', 'success');
+  }
+</script>
+</body>
+</html>
