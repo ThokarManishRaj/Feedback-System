@@ -1,1 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Manage Complaints — KDU Admin</title>
+  <link rel="stylesheet" href="../css/style.css"/>
+  <link rel="stylesheet" href="../css/dashboard.css"/>
+  <style>
+    .modal-overlay {
+      position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:500;
+      display:flex;align-items:center;justify-content:center;padding:20px;
+      opacity:0;pointer-events:none;transition:opacity 0.22s ease;
+    }
+    .modal-overlay.show{opacity:1;pointer-events:all;}
+    .modal-overlay.hidden{display:none;}
+    .modal-box{
+      background:white;border-radius:var(--radius-lg);
+      box-shadow:0 24px 80px rgba(0,0,0,0.3);
+      width:100%;max-width:680px;max-height:90vh;overflow-y:auto;
+      transform:translateY(20px);transition:transform 0.22s ease;
+    }
+    .modal-overlay.show .modal-box{transform:translateY(0);}
+    .modal-header{
+      padding:20px 24px;border-bottom:1px solid var(--gray-200);
+      display:flex;align-items:center;justify-content:space-between;
+      position:sticky;top:0;background:white;z-index:10;
+      border-radius:var(--radius-lg) var(--radius-lg) 0 0;
+    }
+    .modal-header h3{font-size:1rem;font-weight:600;color:var(--gray-800);font-family:var(--font-body);}
+    .modal-close{
+      background:var(--gray-100);border:none;border-radius:50%;
+      width:32px;height:32px;cursor:pointer;font-size:1rem;
+      display:flex;align-items:center;justify-content:center;transition:var(--transition);
+    }
+    .modal-close:hover{background:var(--gray-200);}
+    .modal-body{padding:24px;}
 
+    .status-selector{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:4px;}
+    .status-opt{
+      border:2px solid var(--gray-200);background:white;border-radius:var(--radius-sm);
+      padding:10px 8px;text-align:center;cursor:pointer;
+      transition:var(--transition);font-family:var(--font-body);font-size:0.82rem;font-weight:600;
+    }
+    .status-opt[data-status="Pending"]:hover,.status-opt[data-status="Pending"].selected{border-color:var(--red);background:#fef2f2;color:var(--red);}
+    .status-opt[data-status="In Progress"]:hover,.status-opt[data-status="In Progress"].selected{border-color:var(--orange);background:#fff7ed;color:var(--orange);}
+    .status-opt[data-status="Resolved"]:hover,.status-opt[data-status="Resolved"].selected{border-color:var(--green);background:#f0fdf4;color:var(--green);}
+
+    .bulk-bar{
+      background:var(--navy);color:white;
+      border-radius:var(--radius-sm);padding:10px 16px;
+      display:none;align-items:center;justify-content:space-between;gap:12px;
+      margin-bottom:12px;font-size:0.85rem;
+    }
+    .bulk-bar.show{display:flex;}
+    .bulk-actions{display:flex;gap:8px;}
+  </style>
+</head>
+<body data-page="admin-complaints">
+<div class="dashboard-layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <span class="kdu-logo-placeholder"></span>
+      <div class="kdu-logo-text">
+        <span class="uni-name" style="color:white;">KDU Admin</span>
+        <span class="sys-name">Management Console</span>
+      </div>
+    </div>
+    <div class="sidebar-user-strip">
+      <div class="sidebar-avatar" id="sidebar-avatar" style="background:linear-gradient(135deg,#c9a84c,#a07830);">A</div>
+      <div class="sidebar-user-info">
+        <div class="sidebar-user-name" id="sidebar-username">Administrator</div>
+        <div class="sidebar-user-role" style="color:var(--gold-light);">Admin</div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Overview</div>
+      <a class="nav-item" data-id="dashboard" href="admin-dashboard.html"><span class="nav-icon">📊</span> Dashboard</a>
+      <div class="nav-section-label" style="margin-top:8px;">Management</div>
+      <a class="nav-item" data-id="complaints" href="admin-complaints.html"><span class="nav-icon">📋</span> Complaints <span class="nav-badge" id="pending-admin-badge">0</span></a>
+      <a class="nav-item" data-id="facilities" href="admin-facilities.html"><span class="nav-icon">🏢</span> Facilities</a>
+      <a class="nav-item" data-id="reports" href="admin-reports.html"><span class="nav-icon">📈</span> Reports</a>
+      <div class="nav-section-label" style="margin-top:8px;">Portal</div>
+      <a class="nav-item" href="index.html"><span class="nav-icon">🌐</span> Public Portal</a>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="nav-item" onclick="Auth.logout()"><span class="nav-icon">🚪</span> Sign Out</button>
+    </div>
+  </aside>
+  <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+  <div class="main-content">
+    <div class="main-topbar">
+      <button class="hamburger" id="hamburger">☰</button>
+      <div class="breadcrumb"><a href="admin-dashboard.html">Dashboard</a> › <strong>Complaints</strong></div>
+      <div id="topbar-stats" style="font-size:0.8rem;color:var(--gray-400);display:flex;gap:12px;"></div>
+    </div>
+
+    <div class="main-page">
+      <!-- FILTER BAR -->
+      <div class="filter-bar">
+        <div class="form-group search-wrap" style="flex:3;min-width:240px;">
+          <label class="form-label" style="font-size:0.75rem;">Search</label>
+          <input class="form-input" type="text" id="search-input" placeholder="Search by title, ID, student name, location…"/>
+        </div>
+        <div class="form-group" style="min-width:140px;">
+          <label class="form-label" style="font-size:0.75rem;">Status</label>
+          <select class="form-select" id="filter-status">
+            <option value="">All Statuses</option>
+            <option>Pending</option>
+            <option>In Progress</option>
+            <option>Resolved</option>
+          </select>
+        </div>
+        <div class="form-group" style="min-width:140px;">
+          <label class="form-label" style="font-size:0.75rem;">Category</label>
+          <select class="form-select" id="filter-category">
+            <option value="">All Categories</option>
+            <option>Internet / Wi-Fi</option>
+            <option>Hostel</option>
+            <option>Library</option>
+            <option>Classroom</option>
+            <option>Sports Facility</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="form-group" style="min-width:130px;">
+          <label class="form-label" style="font-size:0.75rem;">Urgency</label>
+          <select class="form-select" id="filter-urgency">
+            <option value="">All Urgencies</option>
+            <option>Critical</option>
+            <option>High</option>
+            <option>Medium</option>
+            <option>Low</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" style="font-size:0.75rem;">&nbsp;</label>
+          <button class="btn btn-ghost btn-sm" onclick="clearFilters()">Clear</button>
+        </div>
+      </div>
+
+      <!-- BULK ACTION BAR -->
+      <div class="bulk-bar" id="bulk-bar">
+        <span id="bulk-count">0 selected</span>
+        <div class="bulk-actions">
+          <button class="btn btn-sm" style="background:rgba(255,255,255,0.1);color:white;" onclick="bulkStatus('Pending')">Set Pending</button>
+          <button class="btn btn-sm" style="background:rgba(234,88,12,0.3);color:white;" onclick="bulkStatus('In Progress')">Set In Progress</button>
+          <button class="btn btn-sm" style="background:rgba(22,163,74,0.3);color:white;" onclick="bulkStatus('Resolved')">Set Resolved</button>
+          <button class="btn btn-sm btn-ghost" style="color:rgba(255,255,255,0.6);" onclick="clearSelection()">Cancel</button>
+        </div>
+      </div>
+
+      <!-- TABLE -->
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th><input type="checkbox" id="select-all" onchange="toggleSelectAll(this)"/></th>
+                <th>Ref ID</th>
+                <th>Title & Location</th>
+                <th>Category</th>
+                <th>Urgency</th>
+                <th>Student</th>
+                <th>Status</th>
+                <th class="hide-mobile">Submitted</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="admin-complaints-tbody">
+              <tr><td colspan="9" style="text-align:center;padding:40px;color:var(--gray-400);">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="card-footer" style="display:flex;justify-content:space-between;align-items:center;">
+          <span id="result-count" style="font-size:0.8rem;color:var(--gray-400);"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- COMPLAINT REVIEW MODAL -->
+<div class="modal-overlay hidden" id="complaint-modal" onclick="handleOverlayClick(event)">
+  <div class="modal-box" id="modal-box">
+    <div class="modal-header">
+      <h3>Review Complaint</h3>
+      <button class="modal-close" onclick="closeReviewModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+<script src="../js/utils.js"></script>
+<script>
+  let selectedIds = new Set();
+  let currentComplaintId = null;
+
+  document.addEventListener('DOMContentLoaded', () => {
+    if (!Auth.requireAuth('admin')) return;
+    initSidebarNav('complaints');
+
+    // Update pending badge
+    const pending = Store.get('kdu_complaints').filter(c=>c.status==='Pending').length;
+    const pb = document.getElementById('pending-admin-badge');
+    if (pb) pb.textContent = pending;
+
+    // Check URL for auto-open
+    const params = new URLSearchParams(window.location.search);
+    const focusId = params.get('id');
+
+    renderTable();
+    if (focusId) setTimeout(() => openReviewModal(focusId), 300);
+
+    // Filters
+    ['search-input','filter-status','filter-category','filter-urgency'].forEach(id => {
+      document.getElementById(id)?.addEventListener('input', renderTable);
+      document.getElementById(id)?.addEventListener('change', renderTable);
+    });
+  });
+
+  function renderTable() {
+    let complaints = Store.get('kdu_complaints');
+    const search = document.getElementById('search-input')?.value.toLowerCase() || '';
+    const status = document.getElementById('filter-status')?.value || '';
+    const category = document.getElementById('filter-category')?.value || '';
+    const urgency = document.getElementById('filter-urgency')?.value || '';
+
+    if (search) complaints = complaints.filter(c =>
+      c.title.toLowerCase().includes(search) ||
+      c.id.toLowerCase().includes(search) ||
+      (c.studentName||'').toLowerCase().includes(search) ||
+      c.location.toLowerCase().includes(search)
+    );
+    if (status) complaints = complaints.filter(c => c.status === status);
+    if (category) complaints = complaints.filter(c => c.category === category);
+    if (urgency) complaints = complaints.filter(c => c.urgency === urgency);
+
+    complaints.sort((a,b) => {
+      const urgOrder = {Critical:0,High:1,Medium:2,Low:3};
+      if (a.status==='Pending' && b.status!=='Pending') return -1;
+      if (b.status==='Pending' && a.status!=='Pending') return 1;
+      return (urgOrder[a.urgency]||4) - (urgOrder[b.urgency]||4);
+    });
+
+    const tbody = document.getElementById('admin-complaints-tbody');
+    if (!complaints.length) {
+      tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--gray-400);">No complaints match your filters.</td></tr>`;
+      document.getElementById('result-count').textContent = '';
+      return;
+    }
+
+    tbody.innerHTML = complaints.map(c => `
+      <tr>
+        <td><input type="checkbox" class="row-check" data-id="${c.id}" onchange="toggleSelect('${c.id}',this)" ${selectedIds.has(c.id)?'checked':''}/></td>
+        <td><span class="complaint-id">${c.id}</span></td>
+        <td>
+          <div style="font-weight:600;font-size:0.85rem;color:var(--gray-800);max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${c.title}</div>
+          <div style="font-size:0.73rem;color:var(--gray-400);">📍 ${c.location}</div>
+        </td>
+        <td><span class="chip chip-navy" style="font-size:0.72rem;">${c.category}</span></td>
+        <td>${urgencyBadge(c.urgency)}</td>
+        <td style="font-size:0.82rem;color:var(--gray-600);">${c.anonymous ? '🔒 Anonymous' : (c.studentName||'—')}</td>
+        <td>${statusBadge(c.status)}</td>
+        <td class="hide-mobile" style="font-size:0.78rem;color:var(--gray-400);">${formatDate(c.dateSubmitted, true)}</td>
+        <td>
+          <button class="btn btn-primary btn-sm" onclick="openReviewModal('${c.id}')">Review →</button>
+        </td>
+      </tr>
+    `).join('');
+
+    document.getElementById('result-count').textContent = `Showing ${complaints.length} complaint${complaints.length!==1?'s':''}`;
+  }
+
+  function openReviewModal(id) {
+    const c = Store.get('kdu_complaints').find(x => x.id === id);
+    if (!c) return;
+    currentComplaintId = id;
+
+    const body = document.getElementById('modal-body');
+    body.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;margin-bottom:20px;">
+        <div>
+          <span class="complaint-id" style="font-size:0.95rem;">${c.id}</span>
+          <h3 style="margin-top:6px;">${c.title}</h3>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">${statusBadge(c.status)} ${urgencyBadge(c.urgency)}</div>
+      </div>
+      <div class="complaint-detail">
+        <div class="field-row"><span class="field-label">Category</span><span class="field-val"><span class="chip chip-navy">${c.category}</span></span></div>
+        <div class="field-row"><span class="field-label">Location</span><span class="field-val">📍 ${c.location}</span></div>
+        <div class="field-row"><span class="field-label">Student</span><span class="field-val">${c.anonymous ? '🔒 Anonymous' : c.studentName}</span></div>
+        <div class="field-row"><span class="field-label">Submitted</span><span class="field-val">${formatDate(c.dateSubmitted)}</span></div>
+        <div class="field-row"><span class="field-label">Last Updated</span><span class="field-val">${formatDate(c.lastUpdated)}</span></div>
+      </div>
+      <div style="margin:16px 0;">
+        <div class="form-label" style="margin-bottom:8px;">Description</div>
+        <p style="background:var(--gray-50);padding:14px;border-radius:8px;font-size:0.875rem;color:var(--gray-700);line-height:1.6;">${c.description}</p>
+      </div>
+      ${c.photo ? `<div style="margin-bottom:16px;"><div class="form-label" style="margin-bottom:8px;">Attached Photo</div><img src="${c.photo}" style="max-width:100%;max-height:200px;border-radius:8px;border:1px solid var(--gray-200);"/></div>` : ''}
+      <hr class="divider"/>
+      <div style="margin-bottom:16px;">
+        <div class="form-label" style="margin-bottom:10px;">Update Status</div>
+        <div class="status-selector">
+          <button class="status-opt ${c.status==='Pending'?'selected':''}" data-status="Pending" onclick="selectModalStatus(this)">⏳ Pending</button>
+          <button class="status-opt ${c.status==='In Progress'?'selected':''}" data-status="In Progress" onclick="selectModalStatus(this)">🔧 In Progress</button>
+          <button class="status-opt ${c.status==='Resolved'?'selected':''}" data-status="Resolved" onclick="selectModalStatus(this)">✅ Resolved</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Response to Student (optional)</label>
+        <textarea class="form-textarea" id="admin-response-input" rows="4" placeholder="Write a response message that will be visible to the student…">${c.adminResponse || ''}</textarea>
+      </div>
+      ${c.adminResponse ? `<div class="admin-response-box" style="margin-bottom:12px;"><div class="resp-label">Previous Response</div><p>${c.adminResponse}</p></div>` : ''}
+      <div style="display:flex;gap:10px;justify-content:flex-end;">
+        <button class="btn btn-ghost" onclick="closeReviewModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="saveComplaintUpdate()">Save Update</button>
+      </div>
+    `;
+
+    const modal = document.getElementById('complaint-modal');
+    modal.classList.remove('hidden');
+    setTimeout(() => modal.classList.add('show'), 10);
+  }
+
+  function selectModalStatus(btn) {
+    document.querySelectorAll('.status-opt').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+  }
+
+  function saveComplaintUpdate() {
+    if (!currentComplaintId) return;
+    const statusEl = document.querySelector('.status-opt.selected');
+    const status = statusEl?.dataset.status;
+    const response = document.getElementById('admin-response-input')?.value.trim();
+    if (!status) { showToast('Please select a status', 'warning'); return; }
+
+    Store.update('kdu_complaints', currentComplaintId, {
+      status,
+      adminResponse: response || null,
+      lastUpdated: new Date().toISOString()
+    });
+
+    showToast(`Complaint updated to "${status}"`, 'success');
+    closeReviewModal();
+    renderTable();
+
+    // Update pending badge
+    const pending = Store.get('kdu_complaints').filter(c=>c.status==='Pending').length;
+    const pb = document.getElementById('pending-admin-badge');
+    if (pb) pb.textContent = pending;
+  }
+
+  function closeReviewModal() {
+    const modal = document.getElementById('complaint-modal');
+    modal.classList.remove('show');
+    setTimeout(() => { modal.classList.add('hidden'); currentComplaintId = null; }, 220);
+  }
+
+  function handleOverlayClick(e) {
+    if (e.target === document.getElementById('complaint-modal')) closeReviewModal();
+  }
+
+  function toggleSelect(id, cb) {
+    if (cb.checked) selectedIds.add(id);
+    else selectedIds.delete(id);
+    updateBulkBar();
+  }
+
+  function toggleSelectAll(cb) {
+    document.querySelectorAll('.row-check').forEach(el => {
+      el.checked = cb.checked;
+      if (cb.checked) selectedIds.add(el.dataset.id);
+      else selectedIds.delete(el.dataset.id);
+    });
+    updateBulkBar();
+  }
+
+  function updateBulkBar() {
+    const bar = document.getElementById('bulk-bar');
+    const cnt = document.getElementById('bulk-count');
+    if (selectedIds.size > 0) { bar.classList.add('show'); cnt.textContent = `${selectedIds.size} selected`; }
+    else { bar.classList.remove('show'); }
+  }
+
+  function bulkStatus(status) {
+    if (!selectedIds.size) return;
+    selectedIds.forEach(id => Store.update('kdu_complaints', id, { status, lastUpdated: new Date().toISOString() }));
+    showToast(`${selectedIds.size} complaint(s) set to "${status}"`, 'success');
+    clearSelection();
+    renderTable();
+  }
+
+  function clearSelection() {
+    selectedIds.clear();
+    document.querySelectorAll('.row-check').forEach(el => el.checked = false);
+    const sa = document.getElementById('select-all');
+    if (sa) sa.checked = false;
+    updateBulkBar();
+  }
+
+  function clearFilters() {
+    document.getElementById('search-input').value = '';
+    document.getElementById('filter-status').value = '';
+    document.getElementById('filter-category').value = '';
+    document.getElementById('filter-urgency').value = '';
+    renderTable();
+  }
+</script>
+</body>
+</html>
