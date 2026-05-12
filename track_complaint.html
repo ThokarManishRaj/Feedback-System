@@ -1,1 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Track Complaints — KDU Facility Management</title>
+  <link rel="stylesheet" href="../css/style.css"/>
+  <link rel="stylesheet" href="../css/dashboard.css"/>
+  <style>
+    .counter-strip {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .counter-chip {
+      background: white;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-md);
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .counter-chip:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
+    .counter-chip.active { border-color: var(--navy); background: rgba(10,31,68,0.04); }
+    .counter-chip .cc-num { font-size: 1.5rem; font-weight: 700; font-family: var(--font-display); }
+    .counter-chip .cc-label { font-size: 0.72rem; font-weight: 600; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.06em; }
+    .counter-chip.all .cc-num { color: var(--navy); }
+    .counter-chip.pending .cc-num { color: var(--red); }
+    .counter-chip.progress .cc-num { color: var(--orange); }
+    .counter-chip.resolved .cc-num { color: var(--green); }
 
+    /* MODAL */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 500;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.22s ease;
+    }
+    .modal-overlay.show { opacity: 1; pointer-events: all; }
+    .modal-overlay.hidden { display: none; }
+    .modal-box {
+      background: white;
+      border-radius: var(--radius-lg);
+      box-shadow: 0 24px 80px rgba(0,0,0,0.3);
+      width: 100%;
+      max-width: 620px;
+      max-height: 88vh;
+      overflow-y: auto;
+      transform: translateY(20px);
+      transition: transform 0.22s ease;
+    }
+    .modal-overlay.show .modal-box { transform: translateY(0); }
+    .modal-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--gray-200);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      background: white;
+      z-index: 10;
+      border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    }
+    .modal-header h3 { font-size: 1rem; font-weight: 600; color: var(--gray-800); font-family: var(--font-body); }
+    .modal-close {
+      background: var(--gray-100); border: none; border-radius: 50%;
+      width: 32px; height: 32px; cursor: pointer; font-size: 1rem;
+      display: flex; align-items: center; justify-content: center;
+      transition: var(--transition);
+    }
+    .modal-close:hover { background: var(--gray-200); }
+    .modal-body { padding: 24px; }
+
+    @media(max-width:700px) {
+      .counter-strip { grid-template-columns: repeat(2,1fr); }
+    }
+    @media(max-width:480px) {
+      .counter-strip { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body data-page="track-complaint">
+<div class="dashboard-layout">
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <span class="kdu-logo-placeholder"></span>
+      <div class="kdu-logo-text">
+        <span class="uni-name" style="color:white;">Kyungdong Univ.</span>
+        <span class="sys-name">Facility Portal</span>
+      </div>
+    </div>
+    <div class="sidebar-user-strip">
+      <div class="sidebar-avatar" id="sidebar-avatar">S</div>
+      <div class="sidebar-user-info">
+        <div class="sidebar-user-name" id="sidebar-username">Loading...</div>
+        <div class="sidebar-user-role">Student</div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Main</div>
+      <a class="nav-item" data-id="dashboard" href="dashboard-student.html"><span class="nav-icon">🏠</span> Dashboard</a>
+      <a class="nav-item" data-id="submit" href="submit-complaint.html"><span class="nav-icon">📝</span> Submit Complaint</a>
+      <a class="nav-item" data-id="track" href="track-complaint.html"><span class="nav-icon">🔍</span> Track Complaints<span class="nav-badge" id="pending-badge" style="display:none;">0</span></a>
+      <div class="nav-section-label" style="margin-top:8px;">Account</div>
+      <a class="nav-item" data-id="profile" href="profile.html"><span class="nav-icon">👤</span> My Profile</a>
+      <a class="nav-item" data-id="index" href="index.html"><span class="nav-icon">🌐</span> Public Board</a>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="nav-item" onclick="Auth.logout()"><span class="nav-icon">🚪</span> Sign Out</button>
+    </div>
+  </aside>
+  <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+  <div class="main-content">
+    <div class="main-topbar">
+      <button class="hamburger" id="hamburger">☰</button>
+      <div class="breadcrumb"><a href="dashboard-student.html">Dashboard</a> › <strong>Track Complaints</strong></div>
+      <a href="submit-complaint.html" class="btn btn-primary btn-sm">+ New Complaint</a>
+    </div>
+
+    <div class="main-page">
+      <!-- COUNTER STRIP -->
+      <div class="counter-strip">
+        <div class="counter-chip all" onclick="filterByStatus('')">
+          <div>
+            <div class="cc-num" id="count-all">0</div>
+            <div class="cc-label">Total</div>
+          </div>
+          <span style="font-size:1.4rem;margin-left:auto;">📋</span>
+        </div>
+        <div class="counter-chip pending" onclick="filterByStatus('Pending')">
+          <div>
+            <div class="cc-num" id="count-pending">0</div>
+            <div class="cc-label">Pending</div>
+          </div>
+          <span style="font-size:1.4rem;margin-left:auto;">⏳</span>
+        </div>
+        <div class="counter-chip progress" onclick="filterByStatus('In Progress')">
+          <div>
+            <div class="cc-num" id="count-progress">0</div>
+            <div class="cc-label">In Progress</div>
+          </div>
+          <span style="font-size:1.4rem;margin-left:auto;">🔧</span>
+        </div>
+        <div class="counter-chip resolved" onclick="filterByStatus('Resolved')">
+          <div>
+            <div class="cc-num" id="count-resolved">0</div>
+            <div class="cc-label">Resolved</div>
+          </div>
+          <span style="font-size:1.4rem;margin-left:auto;">✅</span>
+        </div>
+      </div>
+
+      <!-- FILTER BAR -->
+      <div class="filter-bar">
+        <div class="form-group search-wrap">
+          <label class="form-label" style="font-size:0.75rem;">Search</label>
+          <input class="form-input" type="text" id="search-input" placeholder="Search by title, ID, or location…"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label" style="font-size:0.75rem;">Status</label>
+          <select class="form-select" id="filter-status">
+            <option value="">All Statuses</option>
+            <option>Pending</option>
+            <option>In Progress</option>
+            <option>Resolved</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" style="font-size:0.75rem;">Category</label>
+          <select class="form-select" id="filter-category">
+            <option value="">All Categories</option>
+            <option>Internet / Wi-Fi</option>
+            <option>Hostel</option>
+            <option>Library</option>
+            <option>Classroom</option>
+            <option>Sports Facility</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" style="font-size:0.75rem;">&nbsp;</label>
+          <button class="btn btn-ghost btn-sm" onclick="clearFilters()">Clear Filters</button>
+        </div>
+      </div>
+
+      <!-- TABLE -->
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Reference ID</th>
+                <th>Complaint Title</th>
+                <th>Category</th>
+                <th>Urgency</th>
+                <th>Status</th>
+                <th class="hide-mobile">Submitted</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="complaints-tbody">
+              <tr><td colspan="7" style="text-align:center;padding:40px;color:var(--gray-400);">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="card-footer" style="display:flex;justify-content:space-between;align-items:center;">
+          <span id="result-count" style="font-size:0.8rem;color:var(--gray-400);"></span>
+          <a href="submit-complaint.html" class="btn btn-primary btn-sm">+ Submit New Complaint</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- COMPLAINT DETAIL MODAL -->
+<div class="modal-overlay hidden" id="complaint-modal" onclick="handleModalClick(event)">
+  <div class="modal-box" id="modal-box">
+    <div class="modal-header">
+      <h3>Complaint Details</h3>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+<script src="../js/utils.js"></script>
+<script src="../js/complaints.js"></script>
+<script>
+  function filterByStatus(status) {
+    const sel = document.getElementById('filter-status');
+    if (sel) sel.value = status;
+    renderTrackTable();
+  }
+  function clearFilters() {
+    document.getElementById('search-input').value = '';
+    document.getElementById('filter-status').value = '';
+    document.getElementById('filter-category').value = '';
+    renderTrackTable();
+  }
+  function handleModalClick(e) {
+    if (e.target === document.getElementById('complaint-modal')) closeModal();
+  }
+
+  // Patch renderTrackTable to update result count
+  const _origRender = renderTrackTable;
+
+  document.addEventListener('DOMContentLoaded', () => {
+    if (!Auth.requireAuth('student')) return;
+    initSidebarNav('track');
+    initTrackComplaints();
+    // Update result count after render
+    updateResultCount();
+    ['search-input','filter-status','filter-category'].forEach(id => {
+      document.getElementById(id)?.addEventListener('change', updateResultCount);
+      document.getElementById(id)?.addEventListener('input', updateResultCount);
+    });
+  });
+
+  function updateResultCount() {
+    setTimeout(() => {
+      const rows = document.querySelectorAll('#complaints-tbody tr');
+      const count = rows.length === 1 && rows[0].cells.length === 1 ? 0 : rows.length;
+      const el = document.getElementById('result-count');
+      if (el) el.textContent = count > 0 ? `Showing ${count} complaint${count !== 1 ? 's' : ''}` : '';
+    }, 50);
+  }
+</script>
+</body>
+</html>
