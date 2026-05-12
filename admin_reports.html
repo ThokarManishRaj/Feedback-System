@@ -1,1 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Reports — KDU Admin</title>
+  <link rel="stylesheet" href="../css/style.css"/>
+  <link rel="stylesheet" href="../css/dashboard.css"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <style>
+    .report-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; }
+    .report-card { background: white; border: 1px solid var(--gray-200); border-radius: var(--radius-md); padding: 20px; box-shadow: var(--shadow-sm); }
+    .report-card .rc-title { font-size: 0.9rem; font-weight: 600; color: var(--gray-800); margin-bottom: 16px; font-family: var(--font-body); display: flex; justify-content: space-between; align-items: center; }
+    .chart-wrap { position: relative; height: 240px; }
 
+    .summary-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--gray-100); }
+    .summary-row:last-child { border-bottom: none; }
+    .sr-label { font-size: 0.82rem; color: var(--gray-600); }
+    .sr-val { font-size: 0.9rem; font-weight: 700; color: var(--gray-800); }
+
+    .top-issue-item { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--gray-100); }
+    .top-issue-item:last-child { border-bottom: none; }
+    .tii-rank { width: 24px; height: 24px; border-radius: 50%; background: var(--navy); color: white; font-size: 0.72rem; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .tii-info { flex: 1; }
+    .tii-title { font-size: 0.85rem; font-weight: 600; color: var(--gray-800); }
+    .tii-cat { font-size: 0.72rem; color: var(--gray-400); }
+    .tii-count { font-size: 0.85rem; font-weight: 700; color: var(--navy); }
+
+    .print-header { display: none; }
+    @media print {
+      .sidebar, .main-topbar, .print-actions, .sidebar-overlay { display: none !important; }
+      .main-content { margin-left: 0 !important; }
+      .main-page { padding: 0 !important; }
+      .print-header { display: block; text-align: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 2px solid var(--navy); }
+      .print-header h1 { font-size: 1.4rem; color: var(--navy); }
+      .print-header p { color: var(--gray-500); font-size: 0.85rem; margin-top: 4px; }
+      .report-card { break-inside: avoid; box-shadow: none; border: 1px solid #ddd; }
+      .chart-wrap { height: 180px; }
+    }
+    @media(max-width:900px) { .report-grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body data-page="admin-reports">
+<div class="dashboard-layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <span class="kdu-logo-placeholder"></span>
+      <div class="kdu-logo-text">
+        <span class="uni-name" style="color:white;">KDU Admin</span>
+        <span class="sys-name">Management Console</span>
+      </div>
+    </div>
+    <div class="sidebar-user-strip">
+      <div class="sidebar-avatar" id="sidebar-avatar" style="background:linear-gradient(135deg,#c9a84c,#a07830);">A</div>
+      <div class="sidebar-user-info">
+        <div class="sidebar-user-name" id="sidebar-username">Administrator</div>
+        <div class="sidebar-user-role" style="color:var(--gold-light);">Admin</div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Overview</div>
+      <a class="nav-item" data-id="dashboard" href="admin-dashboard.html"><span class="nav-icon">📊</span> Dashboard</a>
+      <div class="nav-section-label" style="margin-top:8px;">Management</div>
+      <a class="nav-item" data-id="complaints" href="admin-complaints.html"><span class="nav-icon">📋</span> Complaints <span class="nav-badge" id="pending-admin-badge">0</span></a>
+      <a class="nav-item" data-id="facilities" href="admin-facilities.html"><span class="nav-icon">🏢</span> Facilities</a>
+      <a class="nav-item" data-id="reports" href="admin-reports.html"><span class="nav-icon">📈</span> Reports</a>
+      <div class="nav-section-label" style="margin-top:8px;">Portal</div>
+      <a class="nav-item" href="index.html"><span class="nav-icon">🌐</span> Public Portal</a>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="nav-item" onclick="Auth.logout()"><span class="nav-icon">🚪</span> Sign Out</button>
+    </div>
+  </aside>
+  <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+  <div class="main-content">
+    <div class="main-topbar">
+      <button class="hamburger" id="hamburger">☰</button>
+      <div class="breadcrumb"><a href="admin-dashboard.html">Dashboard</a> › <strong>Reports</strong></div>
+      <div class="print-actions" style="display:flex;gap:8px;">
+        <button class="btn btn-ghost btn-sm" onclick="exportCSV()">📥 Export CSV</button>
+        <button class="btn btn-primary btn-sm" onclick="window.print()">🖨️ Print Report</button>
+      </div>
+    </div>
+
+    <div class="main-page">
+
+      <!-- PRINT HEADER (shown only when printing) -->
+      <div class="print-header">
+        <h1>Kyungdong University — Facility Complaint Report</h1>
+        <p>Generated on <span id="print-date"></span> by the Facility Management System</p>
+      </div>
+
+      <!-- SUMMARY STATS -->
+      <div class="stat-cards" style="margin-bottom:24px;">
+        <div class="stat-card navy"><div class="stat-icon">📋</div><div class="stat-label">Total Complaints</div><div class="stat-value" id="r-total">0</div><div class="stat-sub">All time</div></div>
+        <div class="stat-card green"><div class="stat-icon">✅</div><div class="stat-label">Resolved</div><div class="stat-value" id="r-resolved">0</div><div class="stat-sub" id="r-rate">—</div></div>
+        <div class="stat-card orange"><div class="stat-icon">⏱️</div><div class="stat-label">Avg Resolution Time</div><div class="stat-value" id="r-avg-time">—</div><div class="stat-sub">days</div></div>
+        <div class="stat-card red"><div class="stat-icon">🔴</div><div class="stat-label">Critical Issues</div><div class="stat-value" id="r-critical">0</div><div class="stat-sub">Requiring urgent action</div></div>
+      </div>
+
+      <!-- CHARTS ROW 1 -->
+      <div class="report-grid">
+        <div class="report-card">
+          <div class="rc-title">📈 Monthly Complaint Trend (12 Months)</div>
+          <div class="chart-wrap"><canvas id="monthlyTrend"></canvas></div>
+        </div>
+        <div class="report-card">
+          <div class="rc-title">🥧 Status Distribution</div>
+          <div class="chart-wrap"><canvas id="statusChart"></canvas></div>
+        </div>
+      </div>
+
+      <!-- CHARTS ROW 2 -->
+      <div class="report-grid">
+        <div class="report-card">
+          <div class="rc-title">📊 Complaints by Facility Category</div>
+          <div class="chart-wrap"><canvas id="categoryBar"></canvas></div>
+        </div>
+        <div class="report-card">
+          <div class="rc-title">🚦 Urgency Level Breakdown</div>
+          <div class="chart-wrap"><canvas id="urgencyChart"></canvas></div>
+        </div>
+      </div>
+
+      <!-- BOTTOM GRID -->
+      <div class="report-grid">
+        <!-- TOP ISSUES -->
+        <div class="report-card">
+          <div class="rc-title">🔝 Most Reported Issues</div>
+          <div id="top-issues">
+            <p style="color:var(--gray-400);text-align:center;padding:20px;font-size:0.85rem;">Loading…</p>
+          </div>
+        </div>
+
+        <!-- SUMMARY TABLE -->
+        <div class="report-card">
+          <div class="rc-title">📋 Facility Summary</div>
+          <div id="facility-summary">
+            <p style="color:var(--gray-400);text-align:center;padding:20px;font-size:0.85rem;">Loading…</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+<script src="../js/utils.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    if (!Auth.requireAuth('admin')) return;
+    initSidebarNav('reports');
+    document.getElementById('print-date').textContent = new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+    const pending = Store.get('kdu_complaints').filter(c=>c.status==='Pending').length;
+    const pb = document.getElementById('pending-admin-badge');
+    if (pb) pb.textContent = pending;
+    renderReports();
+  });
+
+  function renderReports() {
+    const complaints = Store.get('kdu_complaints');
+    const now = new Date();
+
+    // Summary stats
+    const total = complaints.length;
+    const resolved = complaints.filter(c=>c.status==='Resolved').length;
+    const rate = total ? Math.round((resolved/total)*100) : 0;
+    const critical = complaints.filter(c=>c.urgency==='Critical').length;
+    document.getElementById('r-total').textContent = total;
+    document.getElementById('r-resolved').textContent = resolved;
+    document.getElementById('r-rate').textContent = `${rate}% resolution rate`;
+    document.getElementById('r-critical').textContent = critical;
+
+    // Avg resolution time (mock: resolved complaints)
+    const resolvedComps = complaints.filter(c=>c.status==='Resolved');
+    if (resolvedComps.length) {
+      const avgMs = resolvedComps.reduce((sum,c) => {
+        return sum + (new Date(c.lastUpdated) - new Date(c.dateSubmitted));
+      }, 0) / resolvedComps.length;
+      const avgDays = (avgMs / 86400000).toFixed(1);
+      document.getElementById('r-avg-time').textContent = avgDays;
+    } else {
+      document.getElementById('r-avg-time').textContent = '—';
+    }
+
+    // Monthly trend (12 months)
+    const months12 = [];
+    const monthData12 = [];
+    const resolvedData12 = [];
+    for (let i = 11; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth()-i, 1);
+      months12.push(d.toLocaleDateString('en-US',{month:'short',year:'2-digit'}));
+      monthData12.push(complaints.filter(c=>{const cd=new Date(c.dateSubmitted);return cd.getMonth()===d.getMonth()&&cd.getFullYear()===d.getFullYear();}).length);
+      resolvedData12.push(complaints.filter(c=>{const cd=new Date(c.lastUpdated);return c.status==='Resolved'&&cd.getMonth()===d.getMonth()&&cd.getFullYear()===d.getFullYear();}).length);
+    }
+    new Chart(document.getElementById('monthlyTrend'),{
+      type:'bar',
+      data:{
+        labels:months12,
+        datasets:[
+          {label:'Submitted',data:monthData12,backgroundColor:'rgba(10,31,68,0.8)',borderRadius:4},
+          {label:'Resolved',data:resolvedData12,backgroundColor:'rgba(22,163,74,0.7)',borderRadius:4}
+        ]
+      },
+      options:{
+        responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{position:'bottom',labels:{font:{size:11}}}},
+        scales:{y:{beginAtZero:true,ticks:{stepSize:1,font:{size:11}},grid:{color:'#f3f4f6'}},x:{ticks:{font:{size:10}},grid:{display:false}}}
+      }
+    });
+
+    // Status doughnut
+    const statusCounts = {
+      Pending: complaints.filter(c=>c.status==='Pending').length,
+      'In Progress': complaints.filter(c=>c.status==='In Progress').length,
+      Resolved: resolved
+    };
+    new Chart(document.getElementById('statusChart'),{
+      type:'doughnut',
+      data:{
+        labels:Object.keys(statusCounts),
+        datasets:[{data:Object.values(statusCounts),backgroundColor:['#dc2626','#ea580c','#16a34a'],borderWidth:2,borderColor:'#fff'}]
+      },
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:11}}}}}
+    });
+
+    // Category bar
+    const cats = {};
+    complaints.forEach(c=>{cats[c.category]=(cats[c.category]||0)+1;});
+    new Chart(document.getElementById('categoryBar'),{
+      type:'bar',
+      data:{
+        labels:Object.keys(cats),
+        datasets:[{label:'Complaints',data:Object.values(cats),backgroundColor:'rgba(10,31,68,0.75)',borderRadius:6}]
+      },
+      options:{
+        indexAxis:'y',responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:false}},
+        scales:{x:{beginAtZero:true,ticks:{stepSize:1,font:{size:11}},grid:{color:'#f3f4f6'}},y:{ticks:{font:{size:11}},grid:{display:false}}}
+      }
+    });
+
+    // Urgency pie
+    const urgencies = ['Critical','High','Medium','Low'];
+    const urgColors = ['#dc2626','#ea580c','#d97706','#16a34a'];
+    new Chart(document.getElementById('urgencyChart'),{
+      type:'pie',
+      data:{
+        labels:urgencies,
+        datasets:[{data:urgencies.map(u=>complaints.filter(c=>c.urgency===u).length),backgroundColor:urgColors,borderWidth:2,borderColor:'#fff'}]
+      },
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:11}}}}}
+    });
+
+    // Top issues
+    const titleCounts = {};
+    complaints.forEach(c=>{
+      const key = c.category + ': ' + c.title;
+      titleCounts[key] = (titleCounts[key]||0)+1;
+    });
+    const topIssues = Object.entries(titleCounts).sort((a,b)=>b[1]-a[1]).slice(0,6);
+    const topEl = document.getElementById('top-issues');
+    topEl.innerHTML = topIssues.length ? topIssues.map(([title,count],i) => {
+      const [cat,...rest] = title.split(': ');
+      return `<div class="top-issue-item">
+        <div class="tii-rank">${i+1}</div>
+        <div class="tii-info">
+          <div class="tii-title">${rest.join(': ')}</div>
+          <div class="tii-cat"><span class="chip chip-navy" style="font-size:0.68rem;">${cat}</span></div>
+        </div>
+        <div class="tii-count">${count}×</div>
+      </div>`;
+    }).join('') : '<p style="color:var(--gray-400);text-align:center;padding:20px;font-size:0.85rem;">No data yet.</p>';
+
+    // Facility summary
+    const facSummary = {};
+    complaints.forEach(c=>{
+      if (!facSummary[c.category]) facSummary[c.category] = {total:0,pending:0,resolved:0};
+      facSummary[c.category].total++;
+      if (c.status==='Pending') facSummary[c.category].pending++;
+      if (c.status==='Resolved') facSummary[c.category].resolved++;
+    });
+    const facEl = document.getElementById('facility-summary');
+    const facEntries = Object.entries(facSummary);
+    facEl.innerHTML = facEntries.length ? `
+      <table style="width:100%;font-size:0.82rem;">
+        <thead><tr>
+          <th style="text-align:left;padding:8px 6px;color:var(--gray-400);font-size:0.72rem;text-transform:uppercase;letter-spacing:0.06em;border-bottom:1px solid var(--gray-200);">Facility</th>
+          <th style="text-align:center;padding:8px 6px;color:var(--gray-400);font-size:0.72rem;text-transform:uppercase;letter-spacing:0.06em;border-bottom:1px solid var(--gray-200);">Total</th>
+          <th style="text-align:center;padding:8px 6px;color:var(--gray-400);font-size:0.72rem;text-transform:uppercase;letter-spacing:0.06em;border-bottom:1px solid var(--gray-200);">Pending</th>
+          <th style="text-align:center;padding:8px 6px;color:var(--gray-400);font-size:0.72rem;text-transform:uppercase;letter-spacing:0.06em;border-bottom:1px solid var(--gray-200);">Resolved</th>
+          <th style="text-align:center;padding:8px 6px;color:var(--gray-400);font-size:0.72rem;text-transform:uppercase;letter-spacing:0.06em;border-bottom:1px solid var(--gray-200);">Rate</th>
+        </tr></thead>
+        <tbody>
+          ${facEntries.map(([fac,d])=>`
+            <tr>
+              <td style="padding:9px 6px;font-weight:600;color:var(--gray-800);border-bottom:1px solid var(--gray-100);">${fac}</td>
+              <td style="text-align:center;padding:9px 6px;border-bottom:1px solid var(--gray-100);">${d.total}</td>
+              <td style="text-align:center;padding:9px 6px;border-bottom:1px solid var(--gray-100);color:var(--red);font-weight:600;">${d.pending}</td>
+              <td style="text-align:center;padding:9px 6px;border-bottom:1px solid var(--gray-100);color:var(--green);font-weight:600;">${d.resolved}</td>
+              <td style="text-align:center;padding:9px 6px;border-bottom:1px solid var(--gray-100);">${Math.round((d.resolved/d.total)*100)}%</td>
+            </tr>`).join('')}
+        </tbody>
+      </table>` : '<p style="color:var(--gray-400);text-align:center;padding:20px;font-size:0.85rem;">No data yet.</p>';
+  }
+
+  function exportCSV() {
+    const complaints = Store.get('kdu_complaints');
+    if (!complaints.length) { showToast('No complaints to export', 'warning'); return; }
+    const headers = ['ID','Title','Category','Urgency','Status','Location','Student','Date Submitted','Last Updated','Admin Response'];
+    const rows = complaints.map(c => [
+      c.id, `"${c.title.replace(/"/g,'""')}"`, c.category, c.urgency, c.status,
+      `"${c.location.replace(/"/g,'""')}"`,
+      c.anonymous ? 'Anonymous' : (c.studentName||'—'),
+      new Date(c.dateSubmitted).toLocaleDateString(),
+      new Date(c.lastUpdated).toLocaleDateString(),
+      c.adminResponse ? `"${c.adminResponse.replace(/"/g,'""')}"` : ''
+    ]);
+    const csv = [headers.join(','), ...rows.map(r=>r.join(','))].join('\n');
+    const blob = new Blob([csv], {type:'text/csv'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `kdu_complaints_${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('CSV exported successfully!', 'success');
+  }
+</script>
+</body>
+</html>
