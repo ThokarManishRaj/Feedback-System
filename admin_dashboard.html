@@ -1,1 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Dashboard — KDU Facility Management</title>
+  <link rel="stylesheet" href="../css/style.css"/>
+  <link rel="stylesheet" href="../css/dashboard.css"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <style>
+    .admin-stat-cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+    .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; }
+    .chart-card { background: white; border: 1px solid var(--gray-200); border-radius: var(--radius-md); padding: 20px; box-shadow: var(--shadow-sm); }
+    .chart-card .cc-title { font-size: 0.9rem; font-weight: 600; color: var(--gray-800); margin-bottom: 16px; font-family: var(--font-body); }
+    .chart-wrap { position: relative; height: 220px; }
 
+    .bottom-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+
+    .complaint-row-mini {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--gray-100);
+    }
+    .complaint-row-mini:last-child { border-bottom: none; }
+    .crm-info { flex: 1; min-width: 0; }
+    .crm-title { font-size: 0.85rem; font-weight: 600; color: var(--gray-800); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .crm-meta { font-size: 0.75rem; color: var(--gray-400); margin-top: 2px; display: flex; gap: 8px; flex-wrap: wrap; }
+    .crm-action { flex-shrink: 0; }
+
+    .urgency-breakdown { display: flex; flex-direction: column; gap: 10px; }
+    .ub-item { }
+    .ub-header { display: flex; justify-content: space-between; margin-bottom: 4px; }
+    .ub-label { font-size: 0.8rem; font-weight: 600; }
+    .ub-count { font-size: 0.78rem; color: var(--gray-400); }
+    .ub-bar { height: 6px; border-radius: 99px; background: var(--gray-100); overflow: hidden; }
+    .ub-fill { height: 100%; border-radius: 99px; }
+
+    .quick-action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+    .qa-card {
+      background: white; border: 1px solid var(--gray-200);
+      border-radius: var(--radius-md); padding: 16px;
+      text-align: center; text-decoration: none;
+      transition: var(--transition); display: block;
+    }
+    .qa-card:hover { border-color: var(--navy); box-shadow: var(--shadow-md); transform: translateY(-2px); }
+    .qa-card .qa-icon { font-size: 1.5rem; margin-bottom: 6px; }
+    .qa-card .qa-title { font-size: 0.78rem; font-weight: 600; color: var(--gray-700); }
+
+    @media(max-width:1000px) {
+      .admin-stat-cards { grid-template-columns: repeat(2,1fr); }
+      .chart-grid { grid-template-columns: 1fr; }
+      .bottom-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body data-page="admin-dashboard">
+<div class="dashboard-layout">
+  <!-- ADMIN SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <span class="kdu-logo-placeholder"></span>
+      <div class="kdu-logo-text">
+        <span class="uni-name" style="color:white;">KDU Admin</span>
+        <span class="sys-name">Management Console</span>
+      </div>
+    </div>
+    <div class="sidebar-user-strip">
+      <div class="sidebar-avatar" id="sidebar-avatar" style="background:linear-gradient(135deg,#c9a84c,#a07830);">A</div>
+      <div class="sidebar-user-info">
+        <div class="sidebar-user-name" id="sidebar-username">Administrator</div>
+        <div class="sidebar-user-role" style="color:var(--gold-light);">Admin</div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Overview</div>
+      <a class="nav-item" data-id="dashboard" href="admin-dashboard.html"><span class="nav-icon">📊</span> Dashboard</a>
+      <div class="nav-section-label" style="margin-top:8px;">Management</div>
+      <a class="nav-item" data-id="complaints" href="admin-complaints.html"><span class="nav-icon">📋</span> Complaints <span class="nav-badge" id="pending-admin-badge">0</span></a>
+      <a class="nav-item" data-id="facilities" href="admin-facilities.html"><span class="nav-icon">🏢</span> Facilities</a>
+      <a class="nav-item" data-id="reports" href="admin-reports.html"><span class="nav-icon">📈</span> Reports</a>
+      <div class="nav-section-label" style="margin-top:8px;">Portal</div>
+      <a class="nav-item" data-id="index" href="index.html"><span class="nav-icon">🌐</span> Public Portal</a>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="nav-item" onclick="Auth.logout()"><span class="nav-icon">🚪</span> Sign Out</button>
+    </div>
+  </aside>
+  <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+  <div class="main-content">
+    <div class="main-topbar">
+      <button class="hamburger" id="hamburger">☰</button>
+      <div class="breadcrumb"><strong>Admin Dashboard</strong></div>
+      <div style="display:flex;gap:10px;align-items:center;">
+        <span id="topbar-date" style="font-size:0.8rem;color:var(--gray-400);"></span>
+        <a href="admin-complaints.html" class="btn btn-primary btn-sm">📋 View Complaints</a>
+      </div>
+    </div>
+
+    <div class="main-page">
+      <!-- STAT CARDS -->
+      <div class="admin-stat-cards">
+        <div class="stat-card navy">
+          <div class="stat-icon">📋</div>
+          <div class="stat-label">Total Complaints</div>
+          <div class="stat-value" id="s-total">0</div>
+          <div class="stat-sub">All time</div>
+        </div>
+        <div class="stat-card red">
+          <div class="stat-icon">⏳</div>
+          <div class="stat-label">Pending</div>
+          <div class="stat-value" id="s-pending">0</div>
+          <div class="stat-sub">Needs attention</div>
+        </div>
+        <div class="stat-card orange">
+          <div class="stat-icon">🔧</div>
+          <div class="stat-label">In Progress</div>
+          <div class="stat-value" id="s-progress">0</div>
+          <div class="stat-sub">Currently active</div>
+        </div>
+        <div class="stat-card green">
+          <div class="stat-icon">✅</div>
+          <div class="stat-label">Resolved This Month</div>
+          <div class="stat-value" id="s-resolved">0</div>
+          <div class="stat-sub" id="s-rate">—</div>
+        </div>
+      </div>
+
+      <!-- QUICK ACTIONS -->
+      <div class="quick-action-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:24px;">
+        <a href="admin-complaints.html" class="qa-card">
+          <div class="qa-icon">📋</div>
+          <div class="qa-title">All Complaints</div>
+        </a>
+        <a href="admin-facilities.html" class="qa-card">
+          <div class="qa-icon">🏢</div>
+          <div class="qa-title">Manage Facilities</div>
+        </a>
+        <a href="admin-facilities.html#announcements" class="qa-card">
+          <div class="qa-icon">📢</div>
+          <div class="qa-title">Post Notice</div>
+        </a>
+        <a href="admin-reports.html" class="qa-card">
+          <div class="qa-icon">📈</div>
+          <div class="qa-title">View Reports</div>
+        </a>
+      </div>
+
+      <!-- CHARTS -->
+      <div class="chart-grid">
+        <div class="chart-card">
+          <div class="cc-title">📊 Complaints by Category</div>
+          <div class="chart-wrap"><canvas id="categoryChart"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="cc-title">📈 Monthly Trend (Last 6 Months)</div>
+          <div class="chart-wrap"><canvas id="trendChart"></canvas></div>
+        </div>
+      </div>
+
+      <!-- BOTTOM GRID -->
+      <div class="bottom-grid">
+        <!-- RECENT COMPLAINTS -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h3 style="font-family:var(--font-body);font-size:0.95rem;font-weight:600;">🕐 Recent Complaints</h3>
+              <p style="font-size:0.75rem;color:var(--gray-400);margin-top:2px;">Latest submissions from students</p>
+            </div>
+            <a href="admin-complaints.html" class="btn btn-ghost btn-sm">View All →</a>
+          </div>
+          <div class="card-body" id="recent-complaints-list">
+            <p style="color:var(--gray-400);text-align:center;padding:20px;">Loading…</p>
+          </div>
+        </div>
+
+        <!-- RIGHT SIDEBAR -->
+        <div style="display:flex;flex-direction:column;gap:16px;">
+          <!-- Urgency Breakdown -->
+          <div class="chart-card">
+            <div class="cc-title">🔴 By Urgency Level</div>
+            <div class="urgency-breakdown" id="urgency-breakdown">
+              <p style="color:var(--gray-400);font-size:0.85rem;">Loading…</p>
+            </div>
+          </div>
+          <!-- Facility Status -->
+          <div class="chart-card">
+            <div class="cc-title">🏢 Facility Status</div>
+            <div id="fac-status-mini">
+              <p style="color:var(--gray-400);font-size:0.85rem;">Loading…</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+<script src="../js/utils.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    if (!Auth.requireAuth('admin')) return;
+    initSidebarNav('dashboard');
+    renderAdminDashboard();
+    document.getElementById('topbar-date').textContent = new Date().toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+  });
+
+  function renderAdminDashboard() {
+    const complaints = Store.get('kdu_complaints');
+    const now = new Date();
+    const thisMonth = complaints.filter(c => {
+      const d = new Date(c.dateSubmitted);
+      return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+    });
+
+    // Stats
+    document.getElementById('s-total').textContent = complaints.length;
+    document.getElementById('s-pending').textContent = complaints.filter(c=>c.status==='Pending').length;
+    document.getElementById('s-progress').textContent = complaints.filter(c=>c.status==='In Progress').length;
+    const resolvedMonth = thisMonth.filter(c=>c.status==='Resolved').length;
+    document.getElementById('s-resolved').textContent = resolvedMonth;
+    const rate = complaints.length ? Math.round((complaints.filter(c=>c.status==='Resolved').length / complaints.length)*100) : 0;
+    document.getElementById('s-rate').textContent = `${rate}% resolution rate`;
+
+    // Pending badge in sidebar
+    const pb = document.getElementById('pending-admin-badge');
+    if (pb) pb.textContent = complaints.filter(c=>c.status==='Pending').length;
+
+    // Category chart
+    const cats = {};
+    complaints.forEach(c => { cats[c.category] = (cats[c.category] || 0) + 1; });
+    const catLabels = Object.keys(cats);
+    const catData = Object.values(cats);
+    new Chart(document.getElementById('categoryChart'), {
+      type: 'doughnut',
+      data: {
+        labels: catLabels,
+        datasets: [{
+          data: catData,
+          backgroundColor: ['#0a1f44','#c9a84c','#1a3f7a','#ea580c','#16a34a','#6b7280'],
+          borderWidth: 2, borderColor: '#fff'
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { position: 'bottom', labels: { font: { size: 11 }, padding: 12 } } }
+      }
+    });
+
+    // Monthly trend chart (last 6 months)
+    const months = [];
+    const monthData = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      months.push(d.toLocaleDateString('en-US',{month:'short'}));
+      const count = complaints.filter(c => {
+        const cd = new Date(c.dateSubmitted);
+        return cd.getMonth() === d.getMonth() && cd.getFullYear() === d.getFullYear();
+      }).length;
+      monthData.push(count);
+    }
+    new Chart(document.getElementById('trendChart'), {
+      type: 'line',
+      data: {
+        labels: months,
+        datasets: [{
+          label: 'Complaints',
+          data: monthData,
+          borderColor: '#0a1f44',
+          backgroundColor: 'rgba(10,31,68,0.06)',
+          fill: true,
+          tension: 0.4,
+          pointBackgroundColor: '#c9a84c',
+          pointBorderColor: '#fff',
+          pointBorderWidth: 2,
+          pointRadius: 5
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { beginAtZero: true, ticks: { stepSize: 1, font: { size: 11 } }, grid: { color: '#f3f4f6' } },
+          x: { ticks: { font: { size: 11 } }, grid: { display: false } }
+        }
+      }
+    });
+
+    // Recent complaints
+    const recent = [...complaints].sort((a,b)=>new Date(b.dateSubmitted)-new Date(a.dateSubmitted)).slice(0,5);
+    const rcList = document.getElementById('recent-complaints-list');
+    rcList.innerHTML = recent.length ? recent.map(c => `
+      <div class="complaint-row-mini">
+        <div class="crm-info">
+          <div class="crm-title">${c.title}</div>
+          <div class="crm-meta">
+            <span>${statusBadge(c.status)}</span>
+            <span>${urgencyBadge(c.urgency)}</span>
+            <span style="color:var(--gray-400);">${timeAgo(c.dateSubmitted)}</span>
+          </div>
+        </div>
+        <div class="crm-action">
+          <a href="admin-complaints.html?id=${c.id}" class="btn btn-ghost btn-sm">Review →</a>
+        </div>
+      </div>
+    `).join('') : '<p style="color:var(--gray-400);text-align:center;padding:20px;font-size:0.85rem;">No complaints yet.</p>';
+
+    // Urgency breakdown
+    const urgencies = ['Critical','High','Medium','Low'];
+    const urgColors = { Critical:'var(--red)', High:'var(--orange)', Medium:'#d97706', Low:'var(--green)' };
+    const urgTotal = complaints.length || 1;
+    const urgBD = document.getElementById('urgency-breakdown');
+    urgBD.innerHTML = urgencies.map(u => {
+      const cnt = complaints.filter(c=>c.urgency===u).length;
+      const pct = Math.round((cnt/urgTotal)*100);
+      return `
+        <div class="ub-item">
+          <div class="ub-header">
+            <span class="ub-label" style="color:${urgColors[u]};">${u}</span>
+            <span class="ub-count">${cnt}</span>
+          </div>
+          <div class="ub-bar"><div class="ub-fill" style="width:${pct}%;background:${urgColors[u]};"></div></div>
+        </div>`;
+    }).join('');
+
+    // Facility status
+    const facs = Store.get('kdu_facilities');
+    const statusColors = { operational:'var(--green)', maintenance:'var(--red)', limited:'var(--orange)' };
+    document.getElementById('fac-status-mini').innerHTML = facs.map(f => `
+      <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--gray-100);">
+        <span style="width:8px;height:8px;border-radius:50%;background:${statusColors[f.status]};flex-shrink:0;"></span>
+        <span style="font-size:0.82rem;color:var(--gray-700);flex:1;">${f.name}</span>
+        <a href="admin-facilities.html" style="font-size:0.72rem;color:var(--navy);font-weight:600;">Edit</a>
+      </div>
+    `).join('');
+  }
+</script>
+</body>
+</html>
