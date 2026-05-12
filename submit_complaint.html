@@ -1,1 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Submit Complaint — KDU Facility Management</title>
+  <link rel="stylesheet" href="../css/style.css"/>
+  <link rel="stylesheet" href="../css/dashboard.css"/>
+  <style>
+    .form-card { background: white; border-radius: var(--radius-lg); border: 1px solid var(--gray-200); box-shadow: var(--shadow-sm); overflow: hidden; }
+    .form-card-header {
+      background: linear-gradient(135deg, var(--navy-dark) 0%, var(--navy-mid) 100%);
+      padding: 24px 28px;
+    }
+    .form-card-header h2 { color: white; font-size: 1.2rem; }
+    .form-card-header p { color: rgba(255,255,255,0.6); font-size: 0.85rem; margin-top: 4px; }
+    .form-card-body { padding: 28px; }
 
+    /* CATEGORY SELECTOR */
+    .category-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 4px; }
+    .category-btn {
+      border: 2px solid var(--gray-200);
+      background: white;
+      border-radius: var(--radius-md);
+      padding: 16px 12px;
+      text-align: center;
+      cursor: pointer;
+      transition: var(--transition);
+      font-family: var(--font-body);
+    }
+    .category-btn:hover { border-color: var(--navy); background: var(--gray-50); }
+    .category-btn.selected { border-color: var(--navy); background: rgba(10,31,68,0.05); }
+    .category-btn .cat-icon { font-size: 1.6rem; margin-bottom: 6px; }
+    .category-btn .cat-name { font-size: 0.78rem; font-weight: 600; color: var(--gray-700); }
+    .category-btn.selected .cat-name { color: var(--navy); }
+
+    /* URGENCY SELECTOR */
+    .urgency-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 4px; }
+    .urgency-btn {
+      border: 2px solid var(--gray-200);
+      background: white;
+      border-radius: var(--radius-sm);
+      padding: 10px 8px;
+      text-align: center;
+      cursor: pointer;
+      transition: var(--transition);
+      font-family: var(--font-body);
+      font-size: 0.82rem;
+      font-weight: 600;
+    }
+    .urgency-btn:hover { transform: translateY(-1px); }
+    .urgency-btn[data-urgency="Low"] { color: var(--green); }
+    .urgency-btn[data-urgency="Low"]:hover, .urgency-btn[data-urgency="Low"].selected { border-color: var(--green); background: #f0fdf4; }
+    .urgency-btn[data-urgency="Medium"] { color: #b45309; }
+    .urgency-btn[data-urgency="Medium"]:hover, .urgency-btn[data-urgency="Medium"].selected { border-color: #d97706; background: #fefce8; }
+    .urgency-btn[data-urgency="High"] { color: var(--orange); }
+    .urgency-btn[data-urgency="High"]:hover, .urgency-btn[data-urgency="High"].selected { border-color: var(--orange); background: #fff7ed; }
+    .urgency-btn[data-urgency="Critical"] { color: var(--red); }
+    .urgency-btn[data-urgency="Critical"]:hover, .urgency-btn[data-urgency="Critical"].selected { border-color: var(--red); background: #fef2f2; }
+    .urgency-btn .urg-icon { font-size: 1.1rem; display: block; margin-bottom: 3px; }
+    .urgency-desc { font-size: 0.72rem; color: var(--gray-400); margin-top: 3px; display: none; }
+    .urgency-btn.selected .urgency-desc { display: block; }
+
+    /* PHOTO UPLOAD */
+    .photo-drop {
+      border: 2px dashed var(--gray-300);
+      border-radius: var(--radius-md);
+      padding: 28px;
+      text-align: center;
+      cursor: pointer;
+      transition: var(--transition);
+      background: var(--gray-50);
+    }
+    .photo-drop:hover { border-color: var(--navy); background: rgba(10,31,68,0.03); }
+    .photo-drop .pd-icon { font-size: 2rem; margin-bottom: 8px; }
+    .photo-drop .pd-title { font-size: 0.875rem; font-weight: 600; color: var(--gray-700); }
+    .photo-drop .pd-sub { font-size: 0.78rem; color: var(--gray-400); margin-top: 4px; }
+    #photo { display: none; }
+
+    /* ANONYMOUS TOGGLE */
+    .anon-toggle-wrap {
+      background: #f0f9ff;
+      border: 1px solid #bae6fd;
+      border-radius: var(--radius-md);
+      padding: 16px 18px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .anon-icon { font-size: 1.4rem; }
+    .anon-text { flex: 1; }
+    .anon-text .at-title { font-size: 0.875rem; font-weight: 600; color: var(--gray-800); }
+    .anon-text .at-sub { font-size: 0.78rem; color: var(--gray-500); margin-top: 2px; }
+    .toggle-switch { position: relative; width: 44px; height: 24px; flex-shrink: 0; }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider {
+      position: absolute; cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: var(--gray-300); border-radius: 24px;
+      transition: 0.3s;
+    }
+    .toggle-slider::before {
+      content: '';
+      position: absolute;
+      width: 18px; height: 18px;
+      left: 3px; bottom: 3px;
+      background: white; border-radius: 50%;
+      transition: 0.3s;
+    }
+    input:checked + .toggle-slider { background: var(--navy); }
+    input:checked + .toggle-slider::before { transform: translateX(20px); }
+
+    /* SUCCESS BANNER */
+    .success-banner {
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      border-radius: var(--radius-md);
+      padding: 20px 24px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+    }
+    .success-banner.hidden { display: none; }
+    .success-banner .sb-icon { font-size: 1.6rem; }
+    .success-banner h3 { font-size: 1rem; color: var(--green); margin-bottom: 4px; }
+    .success-banner p { font-size: 0.85rem; color: var(--gray-600); }
+    .success-banner .ref-id { font-family: monospace; font-weight: 700; color: var(--navy); font-size: 1rem; }
+
+    /* TIPS PANEL */
+    .tips-panel { background: white; border: 1px solid var(--gray-200); border-radius: var(--radius-md); padding: 20px; }
+    .tips-panel h4 { font-size: 0.875rem; font-weight: 700; color: var(--navy); margin-bottom: 14px; font-family: var(--font-body); }
+    .tip-item { display: flex; gap: 10px; margin-bottom: 12px; }
+    .tip-item .ti-icon { font-size: 1rem; flex-shrink: 0; }
+    .tip-item .ti-text { font-size: 0.8rem; color: var(--gray-600); line-height: 1.5; }
+
+    .char-wrap { display: flex; justify-content: flex-end; font-size: 0.75rem; color: var(--gray-400); margin-top: 4px; }
+    .submit-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; }
+
+    @media(max-width:900px) { .submit-grid { grid-template-columns: 1fr; } }
+    @media(max-width:600px) {
+      .category-grid { grid-template-columns: repeat(2, 1fr); }
+      .urgency-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body data-page="submit-complaint">
+<div class="dashboard-layout">
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <span class="kdu-logo-placeholder"></span>
+      <div class="kdu-logo-text">
+        <span class="uni-name" style="color:white;">Kyungdong Univ.</span>
+        <span class="sys-name">Facility Portal</span>
+      </div>
+    </div>
+    <div class="sidebar-user-strip">
+      <div class="sidebar-avatar" id="sidebar-avatar">S</div>
+      <div class="sidebar-user-info">
+        <div class="sidebar-user-name" id="sidebar-username">Loading...</div>
+        <div class="sidebar-user-role">Student</div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Main</div>
+      <a class="nav-item" data-id="dashboard" href="dashboard-student.html"><span class="nav-icon">🏠</span> Dashboard</a>
+      <a class="nav-item" data-id="submit" href="submit-complaint.html"><span class="nav-icon">📝</span> Submit Complaint</a>
+      <a class="nav-item" data-id="track" href="track-complaint.html"><span class="nav-icon">🔍</span> Track Complaints<span class="nav-badge" id="pending-badge" style="display:none;">0</span></a>
+      <div class="nav-section-label" style="margin-top:8px;">Account</div>
+      <a class="nav-item" data-id="profile" href="profile.html"><span class="nav-icon">👤</span> My Profile</a>
+      <a class="nav-item" data-id="index" href="index.html"><span class="nav-icon">🌐</span> Public Board</a>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="nav-item" onclick="Auth.logout()"><span class="nav-icon">🚪</span> Sign Out</button>
+    </div>
+  </aside>
+  <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+  <div class="main-content">
+    <div class="main-topbar">
+      <button class="hamburger" id="hamburger">☰</button>
+      <div class="breadcrumb"><a href="dashboard-student.html">Dashboard</a> › <strong>Submit Complaint</strong></div>
+    </div>
+
+    <div class="main-page">
+      <!-- SUCCESS BANNER -->
+      <div class="success-banner hidden" id="success-banner">
+        <div class="sb-icon">✅</div>
+        <div>
+          <h3>Complaint Submitted Successfully!</h3>
+          <p>Your reference number is: <span class="ref-id" id="complaint-ref">—</span></p>
+          <p style="margin-top:4px;">You can <a href="track-complaint.html" style="color:var(--navy);font-weight:600;">track its progress</a> from your dashboard.</p>
+        </div>
+      </div>
+
+      <div class="submit-grid">
+        <!-- FORM -->
+        <div class="form-card">
+          <div class="form-card-header">
+            <h2>📝 New Facility Complaint</h2>
+            <p>Report a facility issue on campus. Fields marked * are required.</p>
+          </div>
+          <div class="form-card-body">
+            <form id="complaint-form" novalidate>
+
+              <!-- CATEGORY -->
+              <div class="form-group">
+                <label class="form-label">Facility Category <span class="req">*</span></label>
+                <div class="category-grid" id="category-grid">
+                  <button type="button" class="category-btn" data-cat="Internet / Wi-Fi" onclick="selectCategory(this)">
+                    <div class="cat-icon">📶</div>
+                    <div class="cat-name">Internet / Wi-Fi</div>
+                  </button>
+                  <button type="button" class="category-btn" data-cat="Hostel" onclick="selectCategory(this)">
+                    <div class="cat-icon">🏠</div>
+                    <div class="cat-name">Hostel</div>
+                  </button>
+                  <button type="button" class="category-btn" data-cat="Library" onclick="selectCategory(this)">
+                    <div class="cat-icon">📚</div>
+                    <div class="cat-name">Library</div>
+                  </button>
+                  <button type="button" class="category-btn" data-cat="Classroom" onclick="selectCategory(this)">
+                    <div class="cat-icon">🏫</div>
+                    <div class="cat-name">Classroom</div>
+                  </button>
+                  <button type="button" class="category-btn" data-cat="Sports Facility" onclick="selectCategory(this)">
+                    <div class="cat-icon">⚽</div>
+                    <div class="cat-name">Sports Facility</div>
+                  </button>
+                  <button type="button" class="category-btn" data-cat="Other" onclick="selectCategory(this)">
+                    <div class="cat-icon">🏢</div>
+                    <div class="cat-name">Other</div>
+                  </button>
+                </div>
+                <input type="hidden" id="category" name="category"/>
+                <div class="form-error" id="err-category"></div>
+              </div>
+
+              <!-- TITLE -->
+              <div class="form-group">
+                <label class="form-label" for="title">Complaint Title <span class="req">*</span></label>
+                <input class="form-input" type="text" id="title" name="title" placeholder="e.g. No Wi-Fi signal in Room 214"/>
+                <div class="form-error" id="err-title"></div>
+              </div>
+
+              <!-- DESCRIPTION -->
+              <div class="form-group">
+                <label class="form-label" for="description">Detailed Description <span class="req">*</span></label>
+                <textarea class="form-textarea" id="description" name="description" rows="5" placeholder="Please describe the issue in detail — what happened, when it started, how it affects you, and any other relevant information…" maxlength="1000"></textarea>
+                <div class="char-wrap"><span id="char-count">0</span>/1000</div>
+                <div class="form-error" id="err-description"></div>
+              </div>
+
+              <!-- LOCATION -->
+              <div class="form-group">
+                <label class="form-label" for="location">Location / Room Number <span class="req">*</span></label>
+                <input class="form-input" type="text" id="location" name="location" placeholder="e.g. Hostel Block A, Room 214 or Library 3rd Floor"/>
+                <div class="form-error" id="err-location"></div>
+              </div>
+
+              <!-- URGENCY -->
+              <div class="form-group">
+                <label class="form-label">Urgency Level <span class="req">*</span></label>
+                <div class="urgency-grid">
+                  <button type="button" class="urgency-btn" data-urgency="Low" onclick="selectUrgency(this)">
+                    <span class="urg-icon">🟢</span>Low
+                    <div class="urgency-desc">Minor issue</div>
+                  </button>
+                  <button type="button" class="urgency-btn" data-urgency="Medium" onclick="selectUrgency(this)">
+                    <span class="urg-icon">🟡</span>Medium
+                    <div class="urgency-desc">Needs attention</div>
+                  </button>
+                  <button type="button" class="urgency-btn" data-urgency="High" onclick="selectUrgency(this)">
+                    <span class="urg-icon">🟠</span>High
+                    <div class="urgency-desc">Affects daily use</div>
+                  </button>
+                  <button type="button" class="urgency-btn" data-urgency="Critical" onclick="selectUrgency(this)">
+                    <span class="urg-icon">🔴</span>Critical
+                    <div class="urgency-desc">Immediate action needed</div>
+                  </button>
+                </div>
+                <input type="hidden" id="urgency-val" name="urgency"/>
+                <div class="form-error" id="err-urgency"></div>
+              </div>
+
+              <!-- PHOTO UPLOAD -->
+              <div class="form-group">
+                <label class="form-label">Attach Photo <span style="color:var(--gray-400);font-weight:400;">(optional)</span></label>
+                <div class="photo-drop" onclick="document.getElementById('photo').click()">
+                  <div class="pd-icon">📸</div>
+                  <div class="pd-title">Click to upload a photo</div>
+                  <div class="pd-sub">JPG, PNG, or GIF · Max 5MB</div>
+                </div>
+                <input type="file" id="photo" name="photo" accept="image/*"/>
+                <div id="photo-preview" style="margin-top:10px;"></div>
+              </div>
+
+              <!-- ANONYMOUS TOGGLE -->
+              <div class="form-group">
+                <label class="form-label">Submission Privacy</label>
+                <div class="anon-toggle-wrap">
+                  <div class="anon-icon">🔒</div>
+                  <div class="anon-text">
+                    <div class="at-title">Submit Anonymously</div>
+                    <div class="at-sub">Your name will be hidden from administrators. Your student ID will not be associated with this complaint.</div>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox" id="anonymous" name="anonymous"/>
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+              </div>
+
+              <hr class="divider"/>
+              <button type="submit" class="btn btn-primary btn-block btn-lg">Submit Complaint →</button>
+            </form>
+          </div>
+        </div>
+
+        <!-- TIPS PANEL -->
+        <div style="display:flex;flex-direction:column;gap:16px;">
+          <div class="tips-panel">
+            <h4>💡 Tips for Faster Resolution</h4>
+            <div class="tip-item">
+              <span class="ti-icon">📍</span>
+              <span class="ti-text">Include the exact room or building number for location-specific issues.</span>
+            </div>
+            <div class="tip-item">
+              <span class="ti-icon">📸</span>
+              <span class="ti-text">Attach a photo if possible — visual evidence speeds up the process significantly.</span>
+            </div>
+            <div class="tip-item">
+              <span class="ti-icon">⏰</span>
+              <span class="ti-text">Mention when the issue started and if it's recurring or just occurred.</span>
+            </div>
+            <div class="tip-item">
+              <span class="ti-icon">🔴</span>
+              <span class="ti-text">Use Critical urgency only for issues that pose safety risks or block essential services.</span>
+            </div>
+            <div class="tip-item">
+              <span class="ti-icon">🔒</span>
+              <span class="ti-text">Use anonymous submission if you're concerned about privacy.</span>
+            </div>
+          </div>
+
+          <div class="tips-panel" style="border-left:4px solid var(--gold);">
+            <h4>📋 What Happens Next?</h4>
+            <div class="tip-item">
+              <span class="ti-icon">1️⃣</span>
+              <span class="ti-text">Your complaint is assigned a unique reference ID and set to <strong>Pending</strong>.</span>
+            </div>
+            <div class="tip-item">
+              <span class="ti-icon">2️⃣</span>
+              <span class="ti-text">Admin reviews and changes status to <strong>In Progress</strong> with a response note.</span>
+            </div>
+            <div class="tip-item">
+              <span class="ti-icon">3️⃣</span>
+              <span class="ti-text">Once fixed, status becomes <strong>Resolved</strong>. Track everything on the complaints page.</span>
+            </div>
+          </div>
+
+          <div class="tips-panel" style="background:var(--navy-dark);border-color:transparent;">
+            <h4 style="color:var(--gold);">🔍 Track Your Complaints</h4>
+            <p style="font-size:0.82rem;color:rgba(255,255,255,0.6);margin-bottom:14px;">See status updates and admin replies on the tracking page.</p>
+            <a href="track-complaint.html" class="btn btn-gold btn-block">Go to My Complaints →</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+<script src="../js/utils.js"></script>
+<script src="../js/complaints.js"></script>
+<script>
+  function selectCategory(btn) {
+    document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    document.getElementById('category').value = btn.dataset.cat;
+  }
+  function selectUrgency(btn) {
+    document.querySelectorAll('.urgency-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    document.getElementById('urgency-val').value = btn.dataset.urgency;
+  }
+  document.addEventListener('DOMContentLoaded', () => {
+    if (!Auth.requireAuth('student')) return;
+    initSidebarNav('submit');
+  });
+</script>
+</body>
+</html>
